@@ -2,33 +2,33 @@ package engine
 
 type TaskState struct {
 	// It must be "Task"
-	Type string
+	Type string `json:"Type"`
 
-	Resource string
+	Resource string `json:"Resource"`
 
-	Comment *string
+	Comment *string `json:"Comment"`
 
-	InputPath  *string
-	OutputPath *string
+	InputPath  *string `json:"InputPath"`
+	OutputPath *string `json:"OutputPath"`
 
-	ResultPath *string
+	ResultPath *string `json:"ResultPath"`
 
-	Retry []Retrier
-	Catch []Catcher
+	Retry []Retrier `json:"Retry"`
+	Catch []Catcher `json:"Catch"`
 
 	// One of (Next, End)
-	Next *string
-	End  *bool
+	Next *string `json:"Next"`
+	End  *bool   `json:"End"`
 
-	// Payload Template
-	Parameters     *string
-	ResultSelector *string
+	// Payload Template, it could be any JSON object
+	Parameters     interface{} `json:"Parameters"`
+	ResultSelector interface{} `json:"ResultSelector"`
 
 	// States.Timeout
-	TimeoutSeconds   *int // defaults 60
-	HeartbeatSeconds *int // < TimeoutSeconds
+	TimeoutSeconds   *int `json:"TimeoutSeconds"`   // defaults 60
+	HeartbeatSeconds *int `json:"HeartbeatSeconds"` // < TimeoutSeconds
 
 	// Reference Paths
-	TimeoutSecondsPath   *string // One of (TimeoutSeconds)
-	HeartbeatSecondsPath *string // One of (HeartbeatSeconds)
+	TimeoutSecondsPath   *string `json:"TimeoutSecondsPath"`   // One of (TimeoutSeconds)
+	HeartbeatSecondsPath *string `json:"HeartbeatSecondsPath"` // One of (HeartbeatSeconds)
 }

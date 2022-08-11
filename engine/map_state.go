@@ -3,35 +3,35 @@ package engine
 // Context Object will has .Map.Item.{Index,Value}
 type MapState struct {
 	// It must be "Map"
-	Type string
+	Type string `json:"Type"`
 
-	Comment *string
+	Comment *string `json:"Comment"`
 
-	InputPath  *string
-	OutputPath *string
+	InputPath  *string `json:"InputPath"`
+	OutputPath *string `json:"OutputPath"`
 
-	ResultPath *string
+	ResultPath *string `json:"ResultPath"`
 
-	Retry []Retrier
-	Catch []Catcher
+	Retry []Retrier `json:"Retry"`
+	Catch []Catcher `json:"Catch"`
 
 	// One of (Next, End)
-	Next *string
-	End  *bool
+	Next *string `json:"Next"`
+	End  *bool   `json:"End"`
 
 	// Payload Template
-	Parameters     *string
-	ResultSelector *string
+	Parameters     interface{} `json:"Parameters"`
+	ResultSelector interface{} `json:"ResultSelector"`
 
 	// Reference Path, JSON array
 	// defaults $
-	ItemsPath *string
+	ItemsPath *string `json:"ItemsPath"`
 
 	// >= 0
 	// defaults 0, no limit
-	MaxConcurrency *int
+	MaxConcurrency *int `json:"MaxConcurrency"`
 
 	// $.States
 	// $.StartAt
-	Iterator *string
+	Iterator States `json:"Iterator"`
 }

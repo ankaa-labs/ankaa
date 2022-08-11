@@ -7,14 +7,17 @@ type State struct {
 	*FailState
 	*SucceedState
 	*TaskState
-	*ParallelState
+	// *ParallelState
 	*PassState
 	*WaitState
 	*MapState
 }
 
 type StateMachine struct {
-	Comment *string
-	StartAt string
-	States  States
+	Comment        *string `json:"Comment"`
+	StartAt        string  `json:"StartAt"`
+	Version        string  `json:"Version"`
+	TimeoutSeconds *int    `json:"TimeoutSeconds"`
+
+	States States `json:"States"`
 }

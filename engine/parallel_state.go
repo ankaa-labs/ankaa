@@ -2,27 +2,27 @@ package engine
 
 type ParallelState struct {
 	// It must be "Parallel"
-	Type string
+	Type string `json:"Type"`
 
-	Comment *string
+	Comment *string `json:"Comment"`
 
-	InputPath  *string
-	OutputPath *string
+	InputPath  *string `json:"InputPath"`
+	OutputPath *string `json:"OutputPath"`
 
-	ResultPath *string
+	ResultPath *string `json:"ResultPath"`
 
-	Retry []Retrier
-	Catch []Catcher
+	Retry []Retrier `json:"Retry"`
+	Catch []Catcher `json:"Catch"`
 
 	// One of (Next, End)
-	Next *string
-	End  *bool
+	Next *string `json:"Next"`
+	End  *bool   `json:"End"`
 
 	// Payload Template
-	Parameters     *string
-	ResultSelector *string
+	Parameters     interface{} `json:"Parameters"`
+	ResultSelector interface{} `json:"ResultSelector"`
 
 	// $.States
 	// $.StartAt
-	Branches []*string
+	Branches []States `json:"Branches"`
 }
