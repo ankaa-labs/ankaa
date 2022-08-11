@@ -5,12 +5,12 @@ type Catcher struct {
 	// +Required
 	// >= 1
 	// States.ALL must the last and only elem
-	ErrorEquals []string
+	ErrorEquals []string `json:"ErrorEquals"`
 
 	// +Required
-	Next string
+	Next string `json:"Next"`
 
 	// +Optional
 	// default $
-	ResultPath *string
+	ResultPath *string `json:"ResultPath"`
 }

@@ -6,93 +6,93 @@ import (
 
 type Choice struct {
 	// required
-	Next string
+	Next string `json:"Next"`
 
 	ChoiceRule
 }
 
 type ChoiceRule struct {
 	// >= 1
-	And []ChoiceRule
+	And []ChoiceRule `json:"And"`
 	// >= 1
-	Or  []ChoiceRule
-	Not *ChoiceRule
+	Or  []ChoiceRule `json:"Or"`
+	Not *ChoiceRule  `json:"Not"`
 
-	StringEquals     *string
-	StringEqualsPath *string
+	StringEquals     *string `json:"StringEquals"`
+	StringEqualsPath *string `json:"StringEqualsPath"`
 
-	StringLessThan     *string
-	StringLessThanPath *string
+	StringLessThan     *string `json:"StringLessThan"`
+	StringLessThanPath *string `json:"StringLessThanPath"`
 
-	StringGreaterThan     *string
-	StringGreaterThanPath *string
+	StringGreaterThan     *string `json:"StringGreaterThan"`
+	StringGreaterThanPath *string `json:"StringGreaterThanPath"`
 
-	StringLessThanEquals     *string
-	StringLessThanEqualsPath *string
+	StringLessThanEquals     *string `json:"StringLessThanEquals"`
+	StringLessThanEqualsPath *string `json:"StringLessThanEqualsPath"`
 
-	StringGreaterThanEquals     *string
-	StringGreaterThanEqualsPath *string
+	StringGreaterThanEquals     *string `json:"StringGreaterThanEquals"`
+	StringGreaterThanEqualsPath *string `json:"StringGreaterThanEqualsPath"`
 
-	StringMatches *string
+	StringMatches *string `json:"StringMatches"`
 
-	NumericEquals     *float64
-	NumericEqualsPath *string
+	NumericEquals     *float64 `json:"NumericEquals"`
+	NumericEqualsPath *string  `json:"NumericEqualsPath"`
 
-	NumericLessThan     *float64
-	NumericLessThanPath *string
+	NumericLessThan     *float64 `json:"NumericLessThan"`
+	NumericLessThanPath *string  `json:"NumericLessThanPath"`
 
-	NumericGreaterThan     *float64
-	NumericGreaterThanPath *string
+	NumericGreaterThan     *float64 `json:"NumericGreaterThan"`
+	NumericGreaterThanPath *string  `json:"NumericGreaterThanPath"`
 
-	NumericLessThanEquals     *float64
-	NumericLessThanEqualsPath *string
+	NumericLessThanEquals     *float64 `json:"NumericLessThanEquals"`
+	NumericLessThanEqualsPath *string  `json:"NumericLessThanEqualsPath"`
 
-	NumericGreaterThanEquals     *float64
-	NumericGreaterThanEqualsPath *string
+	NumericGreaterThanEquals     *float64 `json:"NumericGreaterThanEquals"`
+	NumericGreaterThanEqualsPath *string  `json:"NumericGreaterThanEqualsPath"`
 
-	BooleanEquals     *bool
-	BooleanEqualsPath *string
+	BooleanEquals     *bool   `json:"BooleanEquals"`
+	BooleanEqualsPath *string `json:"BooleanEqualsPath"`
 
-	TimestampEquals     *time.Time
-	TimestampEqualsPath *string
+	TimestampEquals     *time.Time `json:"TimestampEquals"`
+	TimestampEqualsPath *string    `json:"TimestampEqualsPath"`
 
-	TimestampLessThan     *time.Time
-	TimestampLessThanPath *string
+	TimestampLessThan     *time.Time `json:"TimestampLessThan"`
+	TimestampLessThanPath *string    `json:"TimestampLessThanPath"`
 
-	TimestampGreaterThan     *time.Time
-	TimestampGreaterThanPath *string
+	TimestampGreaterThan     *time.Time `json:"TimestampGreaterThan"`
+	TimestampGreaterThanPath *string    `json:"TimestampGreaterThanPath"`
 
-	TimestampLessThanEquals     *time.Time
-	TimestampLessThanEqualsPath *string
+	TimestampLessThanEquals     *time.Time `json:"TimestampLessThanEquals"`
+	TimestampLessThanEqualsPath *string    `json:"TimestampLessThanEqualsPath"`
 
-	TimestampGreaterThanEquals     *time.Time
-	TimestampGreaterThanEqualsPath *string
+	TimestampGreaterThanEquals     *time.Time `json:"TimestampGreaterThanEquals"`
+	TimestampGreaterThanEqualsPath *string    `json:"TimestampGreaterThanEqualsPath"`
 
-	IsNull *bool
+	IsNull *bool `json:"IsNull"`
 
-	IsPresent *bool
+	IsPresent *bool `json:"IsPresent"`
 
-	IsNumeric *bool
+	IsNumeric *bool `json:"IsNumeric"`
 
-	IsString *bool
+	IsString *bool `json:"IsString"`
 
-	IsBoolean *bool
+	IsBoolean *bool `json:"IsBoolean"`
 
-	IsTimestamp *bool
+	IsTimestamp *bool `json:"IsTimestamp"`
 
-	Variable *string
+	Variable *string `json:"Variable"`
 }
 
 type ChoiceState struct {
-	Type    string // Choice
-	Comment *string
+	Type    string  `json:"Type"` // Choice
+	Comment *string `json:"Comment"`
 
-	InputPath  *string
-	OutputPath *string
+	InputPath  *string `json:"InputPath"`
+	OutputPath *string `json:"OutputPath"`
 
 	// required
 	// >= 1
-	Choices []Choice
+	Choices []Choice `json:"Choices"`
 
-	Default *string
+	Default *string `json:"Default"`
 }
