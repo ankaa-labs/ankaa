@@ -24,5 +24,5 @@ type ParallelState struct {
 
 	// $.States
 	// $.StartAt
-	Branches []States `json:"Branches"`
+	Branches []InnerStateMachine `json:"Branches"`
 }

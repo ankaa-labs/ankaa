@@ -33,5 +33,5 @@ type MapState struct {
 
 	// $.States
 	// $.StartAt
-	Iterator States `json:"Iterator"`
+	Iterator InnerStateMachine `json:"Iterator"`
 }
