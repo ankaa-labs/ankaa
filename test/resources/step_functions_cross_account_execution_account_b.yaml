@@ -1,0 +1,6 @@
+Comment: A description of my state machine
+StartAt: Task 1
+States:
+  Task 1:
+    Type: Pass
+    End: true

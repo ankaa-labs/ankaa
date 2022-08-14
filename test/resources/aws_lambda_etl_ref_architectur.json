@@ -1,0 +1,67 @@
+{
+    "StartAt": "GetFileInventory",
+    "States": {
+      "GetFileInventory":{
+        "Type": "Task",
+        "Resource": "${InitializerFunction}",
+        "Catch": [{ 
+          "ErrorEquals": ["States.ALL"], 
+          "Next": "Notify"
+        }],
+        "Next": "ProcessAllFiles"
+      },
+      "ProcessAllFiles":{
+        "Type": "Map",
+        "InputPath": "$",
+        "ItemsPath": "$.chunks",
+        "MaxConcurrency": 3,
+        "Iterator": {
+          "StartAt": "ProcessData",
+          "States": {
+            "ProcessData": {
+              "Type": "Task",
+              "Resource": "${MapperFunction}",
+              "End": true
+            }
+          }
+        },
+        "Catch": [{ 
+          "ErrorEquals": ["States.ALL"], 
+          "Next": "Notify"
+        }],
+        "Next": "WaitTenSeconds"
+      },
+      "WaitTenSeconds": {
+        "Type": "Wait",
+        "Seconds": 10,
+        "Next": "AggregateResults"
+      },
+      "AggregateResults":{
+        "Type": "Task",
+        "Resource": "${ReducerFunction}",
+        "Catch": [{ 
+          "ErrorEquals": ["States.ALL"], 
+          "Next": "CleanupIntermediateResults"
+        }],
+        "Next": "CleanupIntermediateResults"
+      },
+      "CleanupIntermediateResults":{
+        "Type": "Task",
+        "Resource": "${CleanupFunction}",
+        "Catch": [{ 
+          "ErrorEquals": ["States.ALL"], 
+          "Next": "Notify"
+        }],
+        "Next": "Notify"
+      },
+      "Notify":{
+        "Type": "Task",
+        "Resource": "arn:aws:states:::sns:publish",
+        "Parameters": {
+          "TopicArn": "${TopicName}",
+          "Message.$": "$"
+        },
+        "End": true
+      }
+    }
+  }

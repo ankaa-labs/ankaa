@@ -1,0 +1,17 @@
+Comment: A description of my state machine
+StartAt: State Machine B Invoke
+States:
+  State Machine B Invoke:
+    Type: Task
+    Resource: 'arn:aws:states:::apigateway:invoke'
+    Parameters:
+      ApiEndpoint.$: $.ApiUrl
+      Method: POST
+      Stage: dev
+      Path: /execution
+      Headers: {}
+      RequestBody:
+        input.$: $.body
+        stateMachineArn.$: $.stateMachineArn
+      AuthType: RESOURCE_POLICY
+    End: true

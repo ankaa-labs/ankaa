@@ -3,21 +3,21 @@ package engine
 import "time"
 
 type WaitState struct {
-	Type string // Wait
+	Type string `json:"Type"` // Wait
 
 	// One of (Next, End)
-	Next *string
-	End  *bool
+	Next *string `json:"Next"`
+	End  *bool   `json:"End"`
 
-	Comment *string
+	Comment *string `json:"Comment"`
 
-	InputPath  *string
-	OutputPath *string
+	InputPath  *string `json:"InputPath"`
+	OutputPath *string `json:"OutputPath"`
 
 	// One of (sub 4)
-	Seconds     *int
-	SecondsPath *string
+	Seconds     *int    `json:"Seconds"`
+	SecondsPath *string `json:"SecondsPath"`
 
-	Timestamp     *time.Time
-	TimestampPath *string
+	Timestamp     *time.Time `json:"Timestamp"`
+	TimestampPath *string    `json:"TimestampPath"`
 }

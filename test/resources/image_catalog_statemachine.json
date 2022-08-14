@@ -1,0 +1,122 @@
+{
+    "Comment": "Beispielworkflow: Automatisierter Bilderkatalog",
+    "StartAt": "Auf unpassende Inhalte pruefen",
+    "States": {
+      "Auf unpassende Inhalte pruefen": {
+        "Type": "Task",
+        "Parameters": {
+          "Image": {
+            "S3Object": {
+              "Bucket.$": "$.detail.bucket.name",
+              "Name.$": "$.detail.object.key"
+            }
+          }
+        },
+        "Resource": "arn:aws:states:::aws-sdk:rekognition:detectModerationLabels",
+        "Next": "Unpassende Inhalte entdeckt?",
+        "ResultPath": "$.moderationResult"
+      },
+      "Unpassende Inhalte entdeckt?": {
+        "Type": "Choice",
+        "Choices": [
+          {
+            "Variable": "$.moderationResult.ModerationLabels[0]",
+            "IsPresent": true,
+            "Next": "Moderatoren benachrichtigen"
+          }
+        ],
+        "Default": "Bild verarbeiten"
+      },
+      "Bild verarbeiten": {
+        "Type": "Parallel",
+        "End": true,
+        "Branches": [
+          {
+            "StartAt": "Objekte im Bild erkennen",
+            "States": {
+              "Objekte im Bild erkennen": {
+                "Type": "Task",
+                "Parameters": {
+                  "Image": {
+                    "S3Object": {
+                      "Bucket.$": "$.detail.bucket.name",
+                      "Name.$": "$.detail.object.key"
+                    }
+                  }
+                },
+                "Resource": "arn:aws:states:::aws-sdk:rekognition:detectLabels",
+                "Next": "Objekte in Datenbank speichern",
+                "ResultPath": "$.output"
+              },
+              "Objekte in Datenbank speichern": {
+                "Type": "Task",
+                "Resource": "arn:aws:states:::dynamodb:updateItem",
+                "Parameters": {
+                  "TableName": "${CatalogTable}",
+                  "Key": {
+                    "Id": {
+                      "S.$": "$.detail.object.key"
+                    }
+                  },
+                  "UpdateExpression": "set detectedObjects=:o",
+                  "ExpressionAttributeValues": {
+                    ":o": {
+                      "S.$": "States.JsonToString($.output.Labels)"
+                    }
+                  }
+                },
+                "End": true
+              }
+            }
+          },
+          {
+            "StartAt": "Text im Bild erkennen",
+            "States": {
+              "Text im Bild erkennen": {
+                "Type": "Task",
+                "Parameters": {
+                  "Image": {
+                    "S3Object": {
+                      "Bucket.$": "$.detail.bucket.name",
+                      "Name.$": "$.detail.object.key"
+                    }
+                  }
+                },
+                "Resource": "arn:aws:states:::aws-sdk:rekognition:detectText",
+                "Next": "Text in Datenbank abspeichern",
+                "ResultPath": "$.output"
+              },
+              "Text in Datenbank abspeichern": {
+                "Type": "Task",
+                "Resource": "arn:aws:states:::dynamodb:updateItem",
+                "Parameters": {
+                  "TableName": "${CatalogTable}",
+                  "Key": {
+                    "Id": {
+                      "S.$": "$.detail.object.key"
+                    }
+                  },
+                  "UpdateExpression": "set detectedText=:t",
+                  "ExpressionAttributeValues": {
+                    ":t": {
+                      "S.$": "States.JsonToString($.output.TextDetections)"
+                    }
+                  }
+                },
+                "End": true
+              }
+            }
+          }
+        ]
+      },
+      "Moderatoren benachrichtigen": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::sns:publish",
+        "Parameters": {
+          "Message.$": "$",
+          "TopicArn": "${ModeratorSNSTopic}"
+        },
+        "End": true
+      }
+    }
+  }

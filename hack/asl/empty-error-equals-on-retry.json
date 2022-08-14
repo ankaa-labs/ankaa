@@ -1,15 +1,15 @@
 {
-  "StartAt": "p",
-  "States": {
-    "p": {
-      "Type": "Task",
-      "Resource": "foo:bar",
-      "End": true,
-      "Retry": [
-	{
-	  "ErrorEquals": []
-	}
-      ]
+    "StartAt": "p",
+    "States": {
+        "p": {
+            "Type": "Task",
+            "Resource": "foo:bar",
+            "End": true,
+            "Retry": [
+	            {
+	                "ErrorEquals": []
+	            }
+            ]
+        }
     }
-  }
 }

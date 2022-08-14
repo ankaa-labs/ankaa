@@ -1,11 +1,11 @@
 package engine
 
 type FailState struct {
-	Type string // Fail
+	Type string `json:"Type"` // Fail
 
-	Comment *string
+	Comment *string `json:"Comment"`
 
 	// required
-	Error string
-	Cause string
+	Error string `json:"Error"`
+	Cause string `json:"Cause"`
 }

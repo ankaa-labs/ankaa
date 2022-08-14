@@ -1,10 +1,10 @@
 package engine
 
 type SucceedState struct {
-	Type string // Succeed
+	Type string `json:"Type"` // Succeed
 
-	Comment *string
+	Comment *string `json:"Comment"`
 
-	InputPath  *string
-	OutputPath *string
+	InputPath  *string `json:"InputPath"`
+	OutputPath *string `json:"OutputPath"`
 }
