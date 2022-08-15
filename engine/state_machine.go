@@ -5,39 +5,86 @@ import (
 	"fmt"
 )
 
+// BaseStruct is the struct for unmarshal State's Type field
 type BaseStruct struct {
 	Type string `json:"Type"`
 }
 
-func UnmarshalJSON(b []byte) (State, error) {
+// StateFactory to construct a type reference State object
+type StateFactory func() State
+
+// StateType present the type of State object
+type StateType = string
+
+const (
+	// StateTypeWait is the type of Wait State
+	StateTypeWait StateType = "Wait"
+
+	// StateTypeTask is the type of Task State
+	StateTypeTask StateType = "Task"
+
+	// StateTypeSucceed is the type of Succeed State
+	StateTypeSucceed StateType = "Succeed"
+
+	// StateTypePass is the type of Pass State
+	StateTypePass StateType = "Pass"
+
+	// StateTypeMap is the type of Map State
+	StateTypeMap StateType = "Map"
+
+	// StateTypeFail is the type of Fail State
+	StateTypeFail StateType = "Fail"
+
+	// StateTypeChoice is the type of Choice State
+	StateTypeChoice StateType = "Choice"
+
+	// StateTypeParallel is the type of Parallel State
+	StateTypeParallel StateType = "Parallel"
+)
+
+var (
+	stateFactories = map[StateType]StateFactory{
+		StateTypeWait: func() State {
+			return &WaitState{}
+		},
+		StateTypeTask: func() State {
+			return &TaskState{}
+		},
+		StateTypeSucceed: func() State {
+			return &SucceedState{}
+		},
+		StateTypePass: func() State {
+			return &PassState{}
+		},
+		StateTypeMap: func() State {
+			return &MapState{}
+		},
+		StateTypeFail: func() State {
+			return &FailState{}
+		},
+		StateTypeChoice: func() State {
+			return &ChoiceState{}
+		},
+		StateTypeParallel: func() State {
+			return &ParallelState{}
+		},
+	}
+)
+
+// UnmarshalStateFromJSON will unmarshal the json's byte slice to State object
+func UnmarshalStateFromJSON(b []byte) (State, error) {
 	bs := &BaseStruct{}
 	err := json.Unmarshal(b, bs)
 	if err != nil {
 		return nil, err
 	}
 
-	var ss State
-	switch bs.Type {
-	case "Wait":
-		ss = &WaitState{}
-	case "Task":
-		ss = &TaskState{}
-	case "Succeed":
-		ss = &SucceedState{}
-	case "Pass":
-		ss = &PassState{}
-	case "Map":
-		ss = &MapState{}
-	case "Fail":
-		ss = &FailState{}
-	case "Choice":
-		ss = &ChoiceState{}
-	case "Parallel":
-		ss = &ParallelState{}
-	default:
-		return nil, fmt.Errorf("unsupport type: %s", bs.Type)
+	objectFactory, ok := stateFactories[bs.Type]
+	if !ok {
+		return nil, fmt.Errorf("unsupport state type: %s", bs.Type)
 	}
 
+	ss := objectFactory()
 	err = json.Unmarshal(b, ss)
 	if err != nil {
 		return nil, err
@@ -73,7 +120,7 @@ func (s *States) UnmarshalJSON(b []byte) error {
 
 	*s = make(map[string]State, len(rawStatesMap))
 	for k, v := range rawStatesMap {
-		o, err := UnmarshalJSON([]byte(v))
+		o, err := UnmarshalStateFromJSON([]byte(v))
 		if err != nil {
 			return err
 		}

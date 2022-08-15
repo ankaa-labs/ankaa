@@ -1,0 +1,5 @@
+StartAt: p
+States:
+    p:
+        ResultPath: $.foo
+        Type: Fail

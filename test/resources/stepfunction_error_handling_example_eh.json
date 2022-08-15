@@ -1,142 +1,142 @@
 {
-    "Comment":"CalculationStateMachine",
-    "StartAt":"CleanInput",
-    "States":{ 
-       "CleanInput":{ 
-          "Type":"Task",
-          "Resource":"arn:aws:states:::lambda:invoke",
-          "Retry":[ 
-             { 
-                "ErrorEquals":[ 
-                   "States.ALL"
-                ],
-                "IntervalSeconds": 3,
-                "MaxAttempts": 2,
-                "BackoffRate": 1.5
-             }
-          ],
-          "Parameters":{ 
-             "FunctionName":"${CleanFunctionArn}",
-             "Payload":{ 
-                "input.$":"$"
-             }
-          },
-          "Next":"Multiply"
-       },
-       "Multiply":{ 
-          "Type":"Task",
-          "Resource":"arn:aws:states:::lambda:invoke",
-          "Retry":[ 
-             { 
-                "ErrorEquals":[ 
-                   "States.ALL"
-                ],
-                "IntervalSeconds":3 ,
-                "MaxAttempts": 2,
-                "BackoffRate": 1.5
-             }
-          ],
-          "Parameters":{ 
-             "FunctionName":"${MultiplyFunctionArn}",
-             "Payload":{ 
-                "input.$":"$.Payload"
-             }
-          },
-          "Next":"Choice"
-       },
-       "Choice":{ 
-          "Type":"Choice",
-          "Choices":[ 
-             { 
-                "Variable":"$.Payload.result",
-                "NumericGreaterThanEquals": 20,
-                "Next":"Subtract"
-             }
-          ],
-          "Default":"Notify"
-       },
-       "Subtract":{ 
-          "Type":"Task",
-          "Resource":"arn:aws:states:::lambda:invoke",
-          "Retry":[ 
-             { 
-                "ErrorEquals":[ 
-                   "States.ALL"
-                ],
-                "IntervalSeconds": 3,
-                "MaxAttempts": 2,
-                "BackoffRate": 1.5
-             }
-          ],
-          "Parameters":{ 
-             "FunctionName":"${SubtractFunctionArn}",
-             "Payload":{ 
-                "input.$":"$.Payload"
-             }
-          },
-          "Next": "Add"
-       },
-       "Add": {
-        "Type": "Task",
-        "Resource": "arn:aws:states:::lambda:invoke",
-        "Retry":[ 
-            { 
-               "ErrorEquals":[ 
-                  "States.ALL"
-               ],
-               "IntervalSeconds": 3,
-               "MaxAttempts": 2,
-               "BackoffRate": 1.5
-            }
-         ],
-        "Parameters": {
-          "FunctionName": "${AddFunctionArn}",
-          "Payload": {
-            "input.$": "$.Payload"
-          }
+    "Comment": "CalculationStateMachine",
+    "StartAt": "CleanInput",
+    "States": {
+        "Add": {
+            "Next": "Divide",
+            "Parameters": {
+                "FunctionName": "${AddFunctionArn}",
+                "Payload": {
+                    "input.$": "$.Payload"
+                }
+            },
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Retry": [
+                {
+                    "BackoffRate": 1.5,
+                    "ErrorEquals": [
+                        "States.ALL"
+                    ],
+                    "IntervalSeconds": 3,
+                    "MaxAttempts": 2
+                }
+            ],
+            "Type": "Task"
         },
-        "Next": "Divide"
-      },
-      "Divide": {
-        "Type": "Task",
-        "Resource": "arn:aws:states:::lambda:invoke",
-        "Retry":[ 
-            { 
-               "ErrorEquals":[ 
-                  "States.ALL"
-               ],
-               "IntervalSeconds": 3,
-               "MaxAttempts": 2,
-               "BackoffRate": 1.5
-            }
-         ],
-        "Parameters": {
-          "FunctionName": "${DivideFunctionArn}",
-          "Payload": {
-            "input.$": "$.Payload"
-          }
+        "Choice": {
+            "Choices": [
+                {
+                    "Next": "Subtract",
+                    "NumericGreaterThanEquals": 20,
+                    "Variable": "$.Payload.result"
+                }
+            ],
+            "Default": "Notify",
+            "Type": "Choice"
         },
-        "End": true
-      },
-       "Notify":{ 
-          "Type":"Task",
-          "Resource":"arn:aws:states:::sns:publish",
-          "Retry":[ 
-             { 
-                "ErrorEquals":[ 
-                   "States.ALL"
-                ],
-                "IntervalSeconds": 3,
-                "MaxAttempts": 2,
-                "BackoffRate": 1.5
-             }
-          ],
-          "Parameters":{ 
-             "TopicArn":"${TopicArn}",
-             "Message.$":"$$",
-             "Subject":"Failed Test"
-          },
-          "End":true
-       }
-     }
-  }
+        "CleanInput": {
+            "Next": "Multiply",
+            "Parameters": {
+                "FunctionName": "${CleanFunctionArn}",
+                "Payload": {
+                    "input.$": "$"
+                }
+            },
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Retry": [
+                {
+                    "BackoffRate": 1.5,
+                    "ErrorEquals": [
+                        "States.ALL"
+                    ],
+                    "IntervalSeconds": 3,
+                    "MaxAttempts": 2
+                }
+            ],
+            "Type": "Task"
+        },
+        "Divide": {
+            "End": true,
+            "Parameters": {
+                "FunctionName": "${DivideFunctionArn}",
+                "Payload": {
+                    "input.$": "$.Payload"
+                }
+            },
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Retry": [
+                {
+                    "BackoffRate": 1.5,
+                    "ErrorEquals": [
+                        "States.ALL"
+                    ],
+                    "IntervalSeconds": 3,
+                    "MaxAttempts": 2
+                }
+            ],
+            "Type": "Task"
+        },
+        "Multiply": {
+            "Next": "Choice",
+            "Parameters": {
+                "FunctionName": "${MultiplyFunctionArn}",
+                "Payload": {
+                    "input.$": "$.Payload"
+                }
+            },
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Retry": [
+                {
+                    "BackoffRate": 1.5,
+                    "ErrorEquals": [
+                        "States.ALL"
+                    ],
+                    "IntervalSeconds": 3,
+                    "MaxAttempts": 2
+                }
+            ],
+            "Type": "Task"
+        },
+        "Notify": {
+            "End": true,
+            "Parameters": {
+                "Message.$": "$$",
+                "Subject": "Failed Test",
+                "TopicArn": "${TopicArn}"
+            },
+            "Resource": "arn:aws:states:::sns:publish",
+            "Retry": [
+                {
+                    "BackoffRate": 1.5,
+                    "ErrorEquals": [
+                        "States.ALL"
+                    ],
+                    "IntervalSeconds": 3,
+                    "MaxAttempts": 2
+                }
+            ],
+            "Type": "Task"
+        },
+        "Subtract": {
+            "Next": "Add",
+            "Parameters": {
+                "FunctionName": "${SubtractFunctionArn}",
+                "Payload": {
+                    "input.$": "$.Payload"
+                }
+            },
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Retry": [
+                {
+                    "BackoffRate": 1.5,
+                    "ErrorEquals": [
+                        "States.ALL"
+                    ],
+                    "IntervalSeconds": 3,
+                    "MaxAttempts": 2
+                }
+            ],
+            "Type": "Task"
+        }
+    }
+}

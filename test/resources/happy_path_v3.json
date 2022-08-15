@@ -2,88 +2,88 @@
     "Comment": "v3 - Check dimensions/file type",
     "StartAt": "Check Dimensions",
     "States": {
-      "Check Dimensions": {
-        "Type": "Task",
-        "Resource": "${DimensionsFunctionArn}",
-        "Next": "Dimensions Result?"
-      },
-      "Dimensions Result?": {
-        "Type": "Choice",
-        "Choices": [
-          {
-            "Variable": "$.dimensionsResult",
-            "BooleanEquals": true,
-            "Next": "Moderator"
-          },
-          {
-            "Variable": "$.dimensionsResult",
-            "BooleanEquals": false,
-            "Next": "RecordFailState"
-          }
-        ],
-        "Default": "RecordFailState"
-      },
-      "Moderator": {
-        "Type": "Task",
-        "Resource": "${ModeratorFunctionArn}",
-        "Next": "Moderation Result?"
-      },
-      "Moderation Result?": {
-        "Type": "Choice",
-        "Choices": [
-          {
-            "Variable": "$.moderationResult",
-            "BooleanEquals": true,
-            "Next": "Resizer"
-          },
-          {
-            "Variable": "$.moderationResult",
-            "BooleanEquals": false,
-            "Next": "RecordFailState"
-          }
-        ],
-        "Default": "RecordFailState"
-      },
-      "Resizer": {
-        "Type": "Task",
-        "Resource": "${ResizerFunctionArn}",
-        "Next": "Publish"
-      },
-      "Publish": {
-        "Type": "Task",
-        "Resource": "arn:aws:states:::lambda:invoke",
-        "Parameters": {
-          "FunctionName": "${PublishFunctionArn}",
-          "Payload": {
-            "Input.$": "$"
-          }
+        "Check Dimensions": {
+            "Next": "Dimensions Result?",
+            "Resource": "${DimensionsFunctionArn}",
+            "Type": "Task"
         },
-        "End": true
-      },
-      "RecordFailState": {
-        "Type": "Task",
-        "Resource": "${DDBUpdateItem}",
-        "End": true,
-        "Parameters": {
-            "TableName": "${DDBTable}",
-            "Key": {
-                "PK": {
-                    "S": "workflow"
+        "Dimensions Result?": {
+            "Choices": [
+                {
+                    "BooleanEquals": true,
+                    "Next": "Moderator",
+                    "Variable": "$.dimensionsResult"
                 },
-                "SK": {
-                    "S.$": "$.detail.ID"
+                {
+                    "BooleanEquals": false,
+                    "Next": "RecordFailState",
+                    "Variable": "$.dimensionsResult"
+                }
+            ],
+            "Default": "RecordFailState",
+            "Type": "Choice"
+        },
+        "Moderation Result?": {
+            "Choices": [
+                {
+                    "BooleanEquals": true,
+                    "Next": "Resizer",
+                    "Variable": "$.moderationResult"
+                },
+                {
+                    "BooleanEquals": false,
+                    "Next": "RecordFailState",
+                    "Variable": "$.moderationResult"
+                }
+            ],
+            "Default": "RecordFailState",
+            "Type": "Choice"
+        },
+        "Moderator": {
+            "Next": "Moderation Result?",
+            "Resource": "${ModeratorFunctionArn}",
+            "Type": "Task"
+        },
+        "Publish": {
+            "End": true,
+            "Parameters": {
+                "FunctionName": "${PublishFunctionArn}",
+                "Payload": {
+                    "Input.$": "$"
                 }
             },
-            "UpdateExpression": "set objStatus = :newStatus, detail = :detail",
-            "ExpressionAttributeValues": {
-              ":newStatus": {
-                  "S": "REJECTED"
-              },
-              ":detail": {
-                "S.$": "$.workflowDetail"
-              }
-            }
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Type": "Task"
+        },
+        "RecordFailState": {
+            "End": true,
+            "Parameters": {
+                "ExpressionAttributeValues": {
+                    ":detail": {
+                        "S.$": "$.workflowDetail"
+                    },
+                    ":newStatus": {
+                        "S": "REJECTED"
+                    }
+                },
+                "Key": {
+                    "PK": {
+                        "S": "workflow"
+                    },
+                    "SK": {
+                        "S.$": "$.detail.ID"
+                    }
+                },
+                "TableName": "${DDBTable}",
+                "UpdateExpression": "set objStatus = :newStatus, detail = :detail"
+            },
+            "Resource": "${DDBUpdateItem}",
+            "Type": "Task"
+        },
+        "Resizer": {
+            "Next": "Publish",
+            "Resource": "${ResizerFunctionArn}",
+            "Type": "Task"
         }
-      }
     }
-  }
+}

@@ -1,56 +1,56 @@
 Comment: Scatter Gather State Machine for Amazon Location Service
 StartAt: Scatter Function
 States:
-  Scatter Function:
-    Type: Task
-    Resource: "${ScatterFunctionArn}"
-    OutputPath: $.Payload
-    Parameters:
-      Payload.$: $
-    Retry:
-      - ErrorEquals:
-          - Lambda.ServiceException
-          - Lambda.AWSLambdaException
-          - Lambda.SdkClientException
-        IntervalSeconds: 2
-        MaxAttempts: 6
-        BackoffRate: 2
-    Next: Process
-  Process:
-    Type: Map
-    ItemsPath: $.Shards
-    Iterator:
-      StartAt: Process Function
-      States:
-        Process Function:
-          Type: Task
-          Resource: "${ProcessFunctionArn}"
-          OutputPath: $.Payload
-          Parameters:
+    Gather Function:
+        End: true
+        OutputPath: $.Payload
+        Parameters:
             Payload.$: $
-          Retry:
-            - ErrorEquals:
+        Resource: ${GatherFunctionArn}
+        Retry:
+            - BackoffRate: 2
+              ErrorEquals:
                 - Lambda.ServiceException
                 - Lambda.AWSLambdaException
                 - Lambda.SdkClientException
               IntervalSeconds: 2
               MaxAttempts: 6
-              BackoffRate: 2
-          End: true
-    MaxConcurrency: 100
-    Next: Gather Function
-  Gather Function:
-    Type: Task
-    Resource: "${GatherFunctionArn}"
-    OutputPath: $.Payload
-    Parameters:
-      Payload.$: $
-    Retry:
-      - ErrorEquals:
-          - Lambda.ServiceException
-          - Lambda.AWSLambdaException
-          - Lambda.SdkClientException
-        IntervalSeconds: 2
-        MaxAttempts: 6
-        BackoffRate: 2
-    End: true
+        Type: Task
+    Process:
+        ItemsPath: $.Shards
+        Iterator:
+            StartAt: Process Function
+            States:
+                Process Function:
+                    End: true
+                    OutputPath: $.Payload
+                    Parameters:
+                        Payload.$: $
+                    Resource: ${ProcessFunctionArn}
+                    Retry:
+                        - BackoffRate: 2
+                          ErrorEquals:
+                            - Lambda.ServiceException
+                            - Lambda.AWSLambdaException
+                            - Lambda.SdkClientException
+                          IntervalSeconds: 2
+                          MaxAttempts: 6
+                    Type: Task
+        MaxConcurrency: 100
+        Next: Gather Function
+        Type: Map
+    Scatter Function:
+        Next: Process
+        OutputPath: $.Payload
+        Parameters:
+            Payload.$: $
+        Resource: ${ScatterFunctionArn}
+        Retry:
+            - BackoffRate: 2
+              ErrorEquals:
+                - Lambda.ServiceException
+                - Lambda.AWSLambdaException
+                - Lambda.SdkClientException
+              IntervalSeconds: 2
+              MaxAttempts: 6
+        Type: Task

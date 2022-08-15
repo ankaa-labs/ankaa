@@ -1,17 +1,17 @@
 Comment: A description of my state machine
 StartAt: State Machine B Invoke
 States:
-  State Machine B Invoke:
-    Type: Task
-    Resource: 'arn:aws:states:::apigateway:invoke'
-    Parameters:
-      ApiEndpoint.$: $.ApiUrl
-      Method: POST
-      Stage: dev
-      Path: /execution
-      Headers: {}
-      RequestBody:
-        input.$: $.body
-        stateMachineArn.$: $.stateMachineArn
-      AuthType: RESOURCE_POLICY
-    End: true
+    State Machine B Invoke:
+        End: true
+        Parameters:
+            ApiEndpoint.$: $.ApiUrl
+            AuthType: RESOURCE_POLICY
+            Headers: {}
+            Method: POST
+            Path: /execution
+            RequestBody:
+                input.$: $.body
+                stateMachineArn.$: $.stateMachineArn
+            Stage: dev
+        Resource: arn:aws:states:::apigateway:invoke
+        Type: Task

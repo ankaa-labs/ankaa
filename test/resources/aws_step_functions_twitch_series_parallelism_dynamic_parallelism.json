@@ -2,83 +2,83 @@
     "Comment": "An example of the Amazon States Language using a map state to process elements of an array with a max concurrency of 2.",
     "StartAt": "Authorize Charge",
     "States": {
-      "Authorize Charge": {
-        "Type": "Pass",
-        "Result": {
-          "AuthorizationSucceeded": true,
-          "AuthorizationID": "1234567890",
-          "AuthorizedAmount": "81.48"
+        "Authorization Failed": {
+            "Cause": "Charge could not be authorized",
+            "Type": "Fail"
         },
-        "ResultPath": "$.chargeAuthorization",
-        "Next": "Check Authorization"
-      },
-      "Check Authorization": {
-        "Type": "Choice",
-        "Choices": [
-          {
-            "Variable": "$.chargeAuthorization.AuthorizationSucceeded",
-            "BooleanEquals": true,
-            "Next": "Retrieve Items"
-          }
-        ],
-        "Default": "Authorization Failed"
-      },
-      "Retrieve Items": {
-        "Type": "Pass",
-        "Result": [
-          {
-            "SKU": "asdf",
-            "quantity": 1,
-            "price": "2.50"
-          },
-          {
-            "SKU": "qwer",
-            "quantity": 17,
-            "price": "4.21"
-          }
-        ],
-        "ResultPath": "$.orderItems",
-        "Next": "Map"
-      },
-      "Map": {
-        "Type": "Map",
-        "ItemsPath": "$.orderItems",
-        "ResultPath": "$.lockedItems",
-        "MaxConcurrency": 40,
-        "Next": "Print Label",
-        "Iterator": {
-          "StartAt": "Lock Item",
-          "States": {
-            "Lock Item": {
-              "Type": "Pass",
-              "Result": "Done!",
-              "Next": "Pull Item"
+        "Authorize Charge": {
+            "Next": "Check Authorization",
+            "Result": {
+                "AuthorizationID": "1234567890",
+                "AuthorizationSucceeded": true,
+                "AuthorizedAmount": "81.48"
             },
-            "Pull Item": {
-              "Type": "Pass",
-              "Result": "Done!",
-              "Next": "Pack Item"
+            "ResultPath": "$.chargeAuthorization",
+            "Type": "Pass"
+        },
+        "Check Authorization": {
+            "Choices": [
+                {
+                    "BooleanEquals": true,
+                    "Next": "Retrieve Items",
+                    "Variable": "$.chargeAuthorization.AuthorizationSucceeded"
+                }
+            ],
+            "Default": "Authorization Failed",
+            "Type": "Choice"
+        },
+        "Complete Charge": {
+            "End": true,
+            "Type": "Pass"
+        },
+        "Map": {
+            "ItemsPath": "$.orderItems",
+            "Iterator": {
+                "StartAt": "Lock Item",
+                "States": {
+                    "Lock Item": {
+                        "Next": "Pull Item",
+                        "Result": "Done!",
+                        "Type": "Pass"
+                    },
+                    "Pack Item": {
+                        "End": true,
+                        "Result": "Done!",
+                        "Type": "Pass"
+                    },
+                    "Pull Item": {
+                        "Next": "Pack Item",
+                        "Result": "Done!",
+                        "Type": "Pass"
+                    }
+                }
             },
-            "Pack Item": {
-              "Type": "Pass",
-              "Result": "Done!",
-              "End": true
-            }
-          }
+            "MaxConcurrency": 40,
+            "Next": "Print Label",
+            "ResultPath": "$.lockedItems",
+            "Type": "Map"
+        },
+        "Print Label": {
+            "Next": "Complete Charge",
+            "Result": "Done!",
+            "Type": "Pass"
+        },
+        "Retrieve Items": {
+            "Next": "Map",
+            "Result": [
+                {
+                    "SKU": "asdf",
+                    "price": "2.50",
+                    "quantity": 1
+                },
+                {
+                    "SKU": "qwer",
+                    "price": "4.21",
+                    "quantity": 17
+                }
+            ],
+            "ResultPath": "$.orderItems",
+            "Type": "Pass"
         }
-      },
-      "Print Label": {
-        "Type": "Pass",
-        "Result": "Done!",
-        "Next": "Complete Charge"
-      },
-      "Complete Charge": {
-        "Type": "Pass",
-        "End": true
-      },
-      "Authorization Failed": {
-        "Type": "Fail",
-        "Cause": "Charge could not be authorized"
-      }
     }
-  }
+}

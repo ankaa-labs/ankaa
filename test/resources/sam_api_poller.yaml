@@ -1,136 +1,134 @@
 StartAt: PreparePollerJob
 States:
-  PreparePollerJob:
-    Type: Task
-    Resource: arn:aws:states:::lambda:invoke
-    InputPath: "$"
-    OutputPath: "$.Payload"
-    Parameters:
-      FunctionName: "${WorkflowPreparePollerJobFunction}"
-      Payload.$: "$"
-    Next: ProcessPollerTasks
-    Comment: Check the level of parallelism, split requests into chunks and invoke lamndas
-    Retry:
-    - ErrorEquals:
-      - RetriablePollerError
-      IntervalSeconds: 1
-      MaxAttempts: 2
-      BackoffRate: 1
-  ProcessPollerTasks:
-    Type: Map
-    Next: PollerJobComplete
-    InputPath: "$"
-    ItemsPath: "$.tasks"
-    Parameters:
-      task.$: "$$.Map.Item.Value"
-      taskStateMap.$: "$.taskStateMap"
-      nextState.$: "$.taskStateMap.Started"
-    MaxConcurrency: 25
-    Iterator: 
-      StartAt: ReportProgress
-      States:
-        Done:
-          Type: Pass
-          Parameters:
-            jobId.$: "$.task.jobId"
-            taskId.$: "$.task.taskId"
-            state.$: "$.nextState"
-            payloadLocation.$: "$.payloadLocation"
-          End: True
-        ReportProgress:
-          Type: Task
-          Resource: "${DDBPutItem}"
-          ResultPath: "$.ddb"
-          Parameters:
-            Item:
-              JobId:
-                S.$: "$.task.jobId"
-              TaskId:
-                S.$: "$.task.taskId"
-              TimeToLive:
-                N.$: "$.task.ttl"
-              State:
-                S.$: "$.nextState"
-            TableName: "${PollerTasksTable}"
-          Next: ChooseNextAction
-        ChooseNextAction:
-          Type: Choice
-          Choices:
-          - Variable: "$.nextState"
-            StringEqualsPath: "$.taskStateMap.Started"
-            Next: FetchPayload
-          - Variable: "$.nextState"
-            StringEqualsPath: "$.taskStateMap.PayloadSaved"
-            Next: SendToSQS
-          - Variable: "$.nextState"
-            StringEqualsPath: "$.taskStateMap.Enqueued"
-            Next: Done
-          - Variable: "$.nextState"
-            StringEqualsPath: "$.taskStateMap.Failed"
-            Next: Done
-          Default: Done
-        FetchPayload:
-          Type: Task
-          Resource: arn:aws:states:::lambda:invoke
-          OutputPath: "$.Payload"
-          Parameters:
-            FunctionName: "${WorkflowFetchPayloadFunction}"
-            Payload.$: "$"
-          Next: OnPayloadSaved
-          Retry:
-          - ErrorEquals:
-            - RetriablePollerError
-            IntervalSeconds: 2
-            MaxAttempts: 6
-            BackoffRate: 2
-          Catch:
-          - Next: OnFailure
-            ResultPath: "$.error"
-            ErrorEquals:
-            - States.ALL
-        SendToSQS:
-          Type: Task
-          Resource: "${SQSPutItem}"
-          ResultPath: "$.sqs"
-          Parameters:
-            QueueUrl: "${ProcessPayloadQueueUrl}"
-            MessageBody.$: "$"
-            MessageAttributes:
-              jobId:
-                DataType: "String"
-                StringValue.$: "$.task.jobId"
-              taskId:
-                DataType: "String"
-                StringValue.$: "$.task.taskId"
-          Next: OnSentToSQS
-        # grouping state reporting tasks together
-        OnPayloadSaved:
-          Type: Pass
-          Next: ReportProgress
-          Parameters:
-            taskStateMap.$: "$.taskStateMap"
-            task.$: "$.task"
-            nextState.$: "$.taskStateMap.PayloadSaved"
-            payloadLocation.$: "$.payloadLocation"
-        OnSentToSQS:
-          Type: Pass
-          Next: ReportProgress 
-          Parameters:
-            taskStateMap.$: "$.taskStateMap"
-            task.$: "$.task"
-            nextState.$: "$.taskStateMap.Enqueued"
-            payloadLocation.$: "$.payloadLocation"
-        OnFailure:
-          Type: Pass
-          Next: ReportProgress
-          Parameters:
-            taskStateMap.$: "$.taskStateMap"
-            task.$: "$.task"
-            nextState.$: "$.taskStateMap.Failed"
-            payloadLocation.$: "$.payloadLocation"
-        # grouping state reporting tasks together
-  PollerJobComplete:
-    Type: Pass
-    Comment: Used for result aggregation
-    End: true
+    PollerJobComplete:
+        Comment: Used for result aggregation
+        End: true
+        Type: Pass
+    PreparePollerJob:
+        Comment: Check the level of parallelism, split requests into chunks and invoke lamndas
+        InputPath: $
+        Next: ProcessPollerTasks
+        OutputPath: $.Payload
+        Parameters:
+            FunctionName: ${WorkflowPreparePollerJobFunction}
+            Payload.$: $
+        Resource: arn:aws:states:::lambda:invoke
+        Retry:
+            - BackoffRate: 1
+              ErrorEquals:
+                - RetriablePollerError
+              IntervalSeconds: 1
+              MaxAttempts: 2
+        Type: Task
+    ProcessPollerTasks:
+        InputPath: $
+        ItemsPath: $.tasks
+        Iterator:
+            StartAt: ReportProgress
+            States:
+                ChooseNextAction:
+                    Choices:
+                        - Next: FetchPayload
+                          StringEqualsPath: $.taskStateMap.Started
+                          Variable: $.nextState
+                        - Next: SendToSQS
+                          StringEqualsPath: $.taskStateMap.PayloadSaved
+                          Variable: $.nextState
+                        - Next: Done
+                          StringEqualsPath: $.taskStateMap.Enqueued
+                          Variable: $.nextState
+                        - Next: Done
+                          StringEqualsPath: $.taskStateMap.Failed
+                          Variable: $.nextState
+                    Default: Done
+                    Type: Choice
+                Done:
+                    End: true
+                    Parameters:
+                        jobId.$: $.task.jobId
+                        payloadLocation.$: $.payloadLocation
+                        state.$: $.nextState
+                        taskId.$: $.task.taskId
+                    Type: Pass
+                FetchPayload:
+                    Catch:
+                        - ErrorEquals:
+                            - States.ALL
+                          Next: OnFailure
+                          ResultPath: $.error
+                    Next: OnPayloadSaved
+                    OutputPath: $.Payload
+                    Parameters:
+                        FunctionName: ${WorkflowFetchPayloadFunction}
+                        Payload.$: $
+                    Resource: arn:aws:states:::lambda:invoke
+                    Retry:
+                        - BackoffRate: 2
+                          ErrorEquals:
+                            - RetriablePollerError
+                          IntervalSeconds: 2
+                          MaxAttempts: 6
+                    Type: Task
+                OnFailure:
+                    Next: ReportProgress
+                    Parameters:
+                        nextState.$: $.taskStateMap.Failed
+                        payloadLocation.$: $.payloadLocation
+                        task.$: $.task
+                        taskStateMap.$: $.taskStateMap
+                    Type: Pass
+                OnPayloadSaved:
+                    Next: ReportProgress
+                    Parameters:
+                        nextState.$: $.taskStateMap.PayloadSaved
+                        payloadLocation.$: $.payloadLocation
+                        task.$: $.task
+                        taskStateMap.$: $.taskStateMap
+                    Type: Pass
+                OnSentToSQS:
+                    Next: ReportProgress
+                    Parameters:
+                        nextState.$: $.taskStateMap.Enqueued
+                        payloadLocation.$: $.payloadLocation
+                        task.$: $.task
+                        taskStateMap.$: $.taskStateMap
+                    Type: Pass
+                ReportProgress:
+                    Next: ChooseNextAction
+                    Parameters:
+                        Item:
+                            JobId:
+                                S.$: $.task.jobId
+                            State:
+                                S.$: $.nextState
+                            TaskId:
+                                S.$: $.task.taskId
+                            TimeToLive:
+                                N.$: $.task.ttl
+                        TableName: ${PollerTasksTable}
+                    Resource: ${DDBPutItem}
+                    ResultPath: $.ddb
+                    Type: Task
+                SendToSQS:
+                    Next: OnSentToSQS
+                    Parameters:
+                        MessageAttributes:
+                            jobId:
+                                DataType: String
+                                StringValue.$: $.task.jobId
+                            taskId:
+                                DataType: String
+                                StringValue.$: $.task.taskId
+                        MessageBody.$: $
+                        QueueUrl: ${ProcessPayloadQueueUrl}
+                    Resource: ${SQSPutItem}
+                    ResultPath: $.sqs
+                    Type: Task
+        MaxConcurrency: 25
+        Next: PollerJobComplete
+        Parameters:
+            nextState.$: $.taskStateMap.Started
+            task.$: $$.Map.Item.Value
+            taskStateMap.$: $.taskStateMap
+        Type: Map
 TimeoutSeconds: 150

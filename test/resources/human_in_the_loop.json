@@ -2,120 +2,120 @@
     "Comment": "A state machine to integrate a human approver",
     "StartAt": "Notify Approver",
     "States": {
-      "Notify Approver": {
-        "Type": "Task",
-        "Resource": "arn:aws:states:::sns:publish.waitForTaskToken",
-        "Parameters": {
-          "TopicArn": "${TopicName}",
-          "Message": {
-            "token.$": "$$.Task.Token",
-            "message.$": "$"
-          }
+        "Approved?": {
+            "Choices": [
+                {
+                    "And": [
+                        {
+                            "IsPresent": true,
+                            "Variable": "$.approvalStatus"
+                        },
+                        {
+                            "IsPresent": true,
+                            "Variable": "$.approvalStatus.result"
+                        },
+                        {
+                            "BooleanEquals": true,
+                            "Variable": "$.approvalStatus.result"
+                        }
+                    ],
+                    "Next": "Handle approval"
+                },
+                {
+                    "And": [
+                        {
+                            "IsPresent": true,
+                            "Variable": "$.approvalStatus"
+                        },
+                        {
+                            "IsPresent": true,
+                            "Variable": "$.approvalStatus.result"
+                        }
+                    ],
+                    "Next": "Handle rejection"
+                }
+            ],
+            "Default": "Handle failure",
+            "Type": "Choice"
         },
-        "Next": "Approved?",
-        "ResultPath": "$.approvalStatus"
-      },
-      "Approved?": {
-        "Type": "Choice",
-        "Choices": [
-          {
-            "And": [
-              {
-                "Variable": "$.approvalStatus",
-                "IsPresent": true
-              },
-              {
-                "Variable": "$.approvalStatus.result",
-                "IsPresent": true
-              },
-              {
-                "Variable": "$.approvalStatus.result",
-                "BooleanEquals": true
-              }
+        "Handle approval": {
+            "End": true,
+            "OutputPath": "$.Payload",
+            "Parameters": {
+                "FunctionName": "${ProcessingLambda}",
+                "Payload.$": "$"
+            },
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Retry": [
+                {
+                    "BackoffRate": 2,
+                    "ErrorEquals": [
+                        "Lambda.ServiceException",
+                        "Lambda.AWSLambdaException",
+                        "Lambda.SdkClientException"
+                    ],
+                    "IntervalSeconds": 2,
+                    "MaxAttempts": 6
+                }
             ],
-            "Next": "Handle approval"
-          },
-          {
-            "And": [
-              {
-                "Variable": "$.approvalStatus",
-                "IsPresent": true
-              },
-              {
-                "Variable": "$.approvalStatus.result",
-                "IsPresent": true
-              }
-            ],
-            "Next": "Handle rejection"
-          }
-        ],
-        "Default": "Handle failure"
-      },
-      "Handle failure": {
-        "Type": "Task",
-        "Resource": "arn:aws:states:::lambda:invoke",
-        "OutputPath": "$.Payload",
-        "Parameters": {
-          "Payload.$": "$",
-          "FunctionName": "${ProcessingLambda}"
+            "Type": "Task"
         },
-        "Retry": [
-          {
-            "ErrorEquals": [
-              "Lambda.ServiceException",
-              "Lambda.AWSLambdaException",
-              "Lambda.SdkClientException"
+        "Handle failure": {
+            "End": true,
+            "OutputPath": "$.Payload",
+            "Parameters": {
+                "FunctionName": "${ProcessingLambda}",
+                "Payload.$": "$"
+            },
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Retry": [
+                {
+                    "BackoffRate": 2,
+                    "ErrorEquals": [
+                        "Lambda.ServiceException",
+                        "Lambda.AWSLambdaException",
+                        "Lambda.SdkClientException"
+                    ],
+                    "IntervalSeconds": 2,
+                    "MaxAttempts": 6
+                }
             ],
-            "IntervalSeconds": 2,
-            "MaxAttempts": 6,
-            "BackoffRate": 2
-          }
-        ],
-        "End": true
-      },
-      "Handle rejection": {
-        "Type": "Task",
-        "Resource": "arn:aws:states:::lambda:invoke",
-        "OutputPath": "$.Payload",
-        "Parameters": {
-          "Payload.$": "$",
-          "FunctionName": "${ProcessingLambda}"
+            "Type": "Task"
         },
-        "Retry": [
-          {
-            "ErrorEquals": [
-              "Lambda.ServiceException",
-              "Lambda.AWSLambdaException",
-              "Lambda.SdkClientException"
+        "Handle rejection": {
+            "End": true,
+            "OutputPath": "$.Payload",
+            "Parameters": {
+                "FunctionName": "${ProcessingLambda}",
+                "Payload.$": "$"
+            },
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Retry": [
+                {
+                    "BackoffRate": 2,
+                    "ErrorEquals": [
+                        "Lambda.ServiceException",
+                        "Lambda.AWSLambdaException",
+                        "Lambda.SdkClientException"
+                    ],
+                    "IntervalSeconds": 2,
+                    "MaxAttempts": 6
+                }
             ],
-            "IntervalSeconds": 2,
-            "MaxAttempts": 6,
-            "BackoffRate": 2
-          }
-        ],
-        "End": true
-      },
-      "Handle approval": {
-        "Type": "Task",
-        "Resource": "arn:aws:states:::lambda:invoke",
-        "OutputPath": "$.Payload",
-        "Parameters": {
-          "Payload.$": "$",
-          "FunctionName": "${ProcessingLambda}"
+            "Type": "Task"
         },
-        "Retry": [
-          {
-            "ErrorEquals": [
-              "Lambda.ServiceException",
-              "Lambda.AWSLambdaException",
-              "Lambda.SdkClientException"
-            ],
-            "IntervalSeconds": 2,
-            "MaxAttempts": 6,
-            "BackoffRate": 2
-          }
-        ],
-        "End": true
-      }
+        "Notify Approver": {
+            "Next": "Approved?",
+            "Parameters": {
+                "Message": {
+                    "message.$": "$",
+                    "token.$": "$$.Task.Token"
+                },
+                "TopicArn": "${TopicName}"
+            },
+            "Resource": "arn:aws:states:::sns:publish.waitForTaskToken",
+            "ResultPath": "$.approvalStatus",
+            "Type": "Task"
+        }
     }
-  }
+}

@@ -2,25 +2,25 @@
     "Comment": "A state machine that does mock stock trading.",
     "StartAt": "Run CodeBuild With Upgraded Dependencies",
     "States": {
-        "Run CodeBuild With Upgraded Dependencies": {
-            "Type": "Task",
-            "Resource": "arn:aws:states:::codebuild:startBuild.sync",
-            "Parameters": {
-                "ProjectName": "${UpdateDependenciesBuildJob}",
-                "BuildspecOverride": "buildspec-upgrade-dependencies.yml"
-            },
-            "Next": "Publish Results"
-        },
         "Publish Results": {
-            "Type": "Task",
-            "Resource": "arn:aws:states:::sns:publish",
+            "End": true,
             "Parameters": {
-                "TopicArn": "${BuildStatusTopic}",
                 "Message": {
                     "Input.$": "$.Build.BuildStatus"
-                }
+                },
+                "TopicArn": "${BuildStatusTopic}"
             },
-            "End": true
+            "Resource": "arn:aws:states:::sns:publish",
+            "Type": "Task"
+        },
+        "Run CodeBuild With Upgraded Dependencies": {
+            "Next": "Publish Results",
+            "Parameters": {
+                "BuildspecOverride": "buildspec-upgrade-dependencies.yml",
+                "ProjectName": "${UpdateDependenciesBuildJob}"
+            },
+            "Resource": "arn:aws:states:::codebuild:startBuild.sync",
+            "Type": "Task"
         }
     }
 }

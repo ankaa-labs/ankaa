@@ -1,85 +1,85 @@
 StartAt: Account
 States:
-  Account:
-    Type: Task
-    Resource: !GetAtt AccountFunction.Arn
-    Retry:
-      - ErrorEquals:
-          - Lambda.TooManyRequestsException
-          - Lambda.ServiceException
-          - Lambda.AWSLambdaException
-          - Lambda.SdkClientException
-        IntervalSeconds: 2
-        MaxAttempts: 6
-        BackoffRate: 2
-    TimeoutSeconds: 20
-    ResultPath: null # discard result and keep original input
-    Next: DescribeRegions
-  DescribeRegions:
-    Type: Task
-    Resource: "arn:aws:states:::aws-sdk:ec2:describeRegions"
-    Parameters:
-      Filters:
-        - Name: opt-in-status
-          Values:
-            - opt-in-not-required
-      AllRegions: false
-    ResultSelector:
-      "RegionNames.$": "$.Regions[*].RegionName"
-    ResultPath: "$.Regions"
-    Next: AllRegions
-  AllRegions:
-    Type: Map
-    ItemsPath: "$.Regions.RegionNames"
-    MaxConcurrency: 0
-    Parameters:
-      "account_id.$": "$.account.accountId"
-      "region.$": "$$.Map.Item.Value"
-    Iterator:
-      StartAt: Regional
-      States:
-        Regional:
-          Type: Task
-          Resource: !GetAtt RegionalFunction.Arn
-          Retry:
-            - ErrorEquals:
+    Account:
+        Next: DescribeRegions
+        Resource: AccountFunction.Arn
+        ResultPath: null
+        Retry:
+            - BackoffRate: 2
+              ErrorEquals:
                 - Lambda.TooManyRequestsException
                 - Lambda.ServiceException
                 - Lambda.AWSLambdaException
                 - Lambda.SdkClientException
               IntervalSeconds: 2
               MaxAttempts: 6
-              BackoffRate: 2
-          TimeoutSeconds: 20
-          End: true
-    ResultPath: null # discard result and keep original input
-    Next: SSOAssignment
-  SSOAssignment:
-    Type: Task
-    Resource: !GetAtt SSOAssignmentFunction.Arn
-    Retry:
-      - ErrorEquals:
-          - Lambda.TooManyRequestsException
-          - Lambda.ServiceException
-          - Lambda.AWSLambdaException
-          - Lambda.SdkClientException
-        IntervalSeconds: 2
-        MaxAttempts: 6
-        BackoffRate: 2
-    TimeoutSeconds: 300
-    ResultPath: null # discard result and keep original input
-    Next: ServiceCatalogPortfolio
-  ServiceCatalogPortfolio:
-    Type: Task
-    Resource: !GetAtt ServiceCatalogPortfolioFunction.Arn
-    Retry:
-      - ErrorEquals:
-          - Lambda.TooManyRequestsException
-          - Lambda.ServiceException
-          - Lambda.AWSLambdaException
-          - Lambda.SdkClientException
-        IntervalSeconds: 2
-        MaxAttempts: 6
-        BackoffRate: 2
-    TimeoutSeconds: 300
-    End: true
+        TimeoutSeconds: 20
+        Type: Task
+    AllRegions:
+        ItemsPath: $.Regions.RegionNames
+        Iterator:
+            StartAt: Regional
+            States:
+                Regional:
+                    End: true
+                    Resource: RegionalFunction.Arn
+                    Retry:
+                        - BackoffRate: 2
+                          ErrorEquals:
+                            - Lambda.TooManyRequestsException
+                            - Lambda.ServiceException
+                            - Lambda.AWSLambdaException
+                            - Lambda.SdkClientException
+                          IntervalSeconds: 2
+                          MaxAttempts: 6
+                    TimeoutSeconds: 20
+                    Type: Task
+        MaxConcurrency: 0
+        Next: SSOAssignment
+        Parameters:
+            account_id.$: $.account.accountId
+            region.$: $$.Map.Item.Value
+        ResultPath: null
+        Type: Map
+    DescribeRegions:
+        Next: AllRegions
+        Parameters:
+            AllRegions: false
+            Filters:
+                - Name: opt-in-status
+                  Values:
+                    - opt-in-not-required
+        Resource: arn:aws:states:::aws-sdk:ec2:describeRegions
+        ResultPath: $.Regions
+        ResultSelector:
+            RegionNames.$: $.Regions[*].RegionName
+        Type: Task
+    SSOAssignment:
+        Next: ServiceCatalogPortfolio
+        Resource: SSOAssignmentFunction.Arn
+        ResultPath: null
+        Retry:
+            - BackoffRate: 2
+              ErrorEquals:
+                - Lambda.TooManyRequestsException
+                - Lambda.ServiceException
+                - Lambda.AWSLambdaException
+                - Lambda.SdkClientException
+              IntervalSeconds: 2
+              MaxAttempts: 6
+        TimeoutSeconds: 300
+        Type: Task
+    ServiceCatalogPortfolio:
+        End: true
+        Resource: ServiceCatalogPortfolioFunction.Arn
+        Retry:
+            - BackoffRate: 2
+              ErrorEquals:
+                - Lambda.TooManyRequestsException
+                - Lambda.ServiceException
+                - Lambda.AWSLambdaException
+                - Lambda.SdkClientException
+              IntervalSeconds: 2
+              MaxAttempts: 6
+        TimeoutSeconds: 300
+        Type: Task

@@ -2,30 +2,30 @@
     "Comment": "A Hello World example demonstrating various state types of the Amazon States Language",
     "StartAt": "Pass",
     "States": {
-      "Pass": {
-        "Comment": "A Pass state passes its input to its output, without performing work. Pass states are useful when constructing and debugging state machines.",
-        "Type": "Pass",
-        "Next": "Invoke Lambda function"
-      },
-      "Invoke Lambda function": {
-        "Type": "Task",
-        "Resource": "arn:aws:states:::lambda:invoke",
-        "Parameters": {
-          "FunctionName": "${JSONPathLambdaFunction}",
-          "Payload": {
-            "name.$": "$.name"
-          }
+        "Invoke Lambda function": {
+            "Next": "Manipulator",
+            "Parameters": {
+                "FunctionName": "${JSONPathLambdaFunction}",
+                "Payload": {
+                    "name.$": "$.name"
+                }
+            },
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "ResultPath": "$.lambdaOutput",
+            "Type": "Task"
         },
-        "ResultPath": "$.lambdaOutput",
-        "Next": "Manipulator"
-      },
-      "Manipulator": {
-        "Type": "Pass",
-        "Parameters": {
-          "Date": "2020-04-28T18:38:00",
-          "Message.$": "$.lambdaOutput.Payload.Message"
+        "Manipulator": {
+            "End": true,
+            "Parameters": {
+                "Date": "2020-04-28T18:38:00",
+                "Message.$": "$.lambdaOutput.Payload.Message"
+            },
+            "Type": "Pass"
         },
-        "End": true
-      }
+        "Pass": {
+            "Comment": "A Pass state passes its input to its output, without performing work. Pass states are useful when constructing and debugging state machines.",
+            "Next": "Invoke Lambda function",
+            "Type": "Pass"
+        }
     }
-  }
+}

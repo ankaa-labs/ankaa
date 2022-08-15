@@ -1,190 +1,178 @@
-# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-# SPDX-License-Identifier: MIT-0
-Comment: "Managing Long Lived Transactions with AWS Step Functions State Machine"
+Comment: Managing Long Lived Transactions with AWS Step Functions State Machine
 StartAt: ProcessOrder
-TimeoutSeconds: 15
 States:
-  ProcessOrder:
-    Type: Task
-    Resource: 'arn:aws:states:::lambda:invoke'
-    OutputPath: $.Payload
-    Parameters:
-      Payload.$: $
-      FunctionName: "${NewOrderFunction}"
-    Retry:
-      - ErrorEquals:
-          - Lambda.ServiceException
-          - Lambda.AWSLambdaException
-          - Lambda.SdkClientException
-        IntervalSeconds: 2
-        MaxAttempts: 6
-        BackoffRate: 2
-    Next: ProcessPayment
-    Comment: First transaction to save the order and set the order status to new
-    Catch:
-      - ErrorEquals:
-          - ErrProcessOrder
+    OrderFailed:
+        Type: Fail
+    OrderSucceeded:
+        Type: Succeed
+    ProcessOrder:
+        Catch:
+            - ErrorEquals:
+                - ErrProcessOrder
+              Next: UpdateOrderStatus
+              ResultPath: $.error
+        Comment: First transaction to save the order and set the order status to new
+        Next: ProcessPayment
+        OutputPath: $.Payload
+        Parameters:
+            FunctionName: ${NewOrderFunction}
+            Payload.$: $
+        Resource: arn:aws:states:::lambda:invoke
+        Retry:
+            - BackoffRate: 2
+              ErrorEquals:
+                - Lambda.ServiceException
+                - Lambda.AWSLambdaException
+                - Lambda.SdkClientException
+              IntervalSeconds: 2
+              MaxAttempts: 6
+        TimeoutSeconds: 10
+        Type: Task
+    ProcessPayment:
+        Catch:
+            - ErrorEquals:
+                - ErrProcessPayment
+              Next: ProcessRefund
+              ResultPath: $.error
+        Comment: Task processes the order payment
+        Next: ReserveInventory
+        OutputPath: $.Payload
+        Parameters:
+            FunctionName: ${DebitPaymentFunction}
+            Payload.$: $
+        Resource: arn:aws:states:::lambda:invoke
+        Retry:
+            - BackoffRate: 2
+              ErrorEquals:
+                - Lambda.ServiceException
+                - Lambda.AWSLambdaException
+                - Lambda.SdkClientException
+              IntervalSeconds: 2
+              MaxAttempts: 6
+        TimeoutSeconds: 10
+        Type: Task
+    ProcessRefund:
+        Catch:
+            - ErrorEquals:
+                - ErrProcessRefund
+              Next: sns:NotifyProcessRefundFail
+              ResultPath: $.error
+        Comment: Task to process order refund
         Next: UpdateOrderStatus
-        ResultPath: $.error
-    TimeoutSeconds: 10
-
-  ProcessPayment:
-    Type: Task
-    Resource: 'arn:aws:states:::lambda:invoke'
-    OutputPath: $.Payload
-    Parameters:
-      Payload.$: $
-      FunctionName: "${DebitPaymentFunction}"
-    Retry:
-      - ErrorEquals:
-          - Lambda.ServiceException
-          - Lambda.AWSLambdaException
-          - Lambda.SdkClientException
-        IntervalSeconds: 2
-        MaxAttempts: 6
-        BackoffRate: 2
-    Next: ReserveInventory
-    Comment: Task processes the order payment
-    Catch:
-      - ErrorEquals:
-          - ErrProcessPayment
+        OutputPath: $.Payload
+        Parameters:
+            FunctionName: ${CreditPaymentFunction}
+            Payload.$: $
+        Resource: arn:aws:states:::lambda:invoke
+        Retry:
+            - BackoffRate: 2
+              ErrorEquals:
+                - Lambda.ServiceException
+                - Lambda.AWSLambdaException
+                - Lambda.SdkClientException
+              IntervalSeconds: 2
+              MaxAttempts: 6
+        TimeoutSeconds: 10
+        Type: Task
+    ReleaseInventory:
+        Catch:
+            - ErrorEquals:
+                - ErrReleaseInventory
+              Next: sns:NotifyReleaseInventoryFail
+              ResultPath: $.error
+        Comment: Task to release order items back to inventory
         Next: ProcessRefund
-        ResultPath: $.error
-    TimeoutSeconds: 10
-
-  ReserveInventory:
-    Type: Task
-    Resource: 'arn:aws:states:::lambda:invoke'
-    OutputPath: $.Payload
-    Parameters:
-      Payload.$: $
-      FunctionName: "${ReserveInventoryFunction}"
-    Retry:
-      - ErrorEquals:
-          - Lambda.ServiceException
-          - Lambda.AWSLambdaException
-          - Lambda.SdkClientException
-        IntervalSeconds: 2
-        MaxAttempts: 6
-        BackoffRate: 2
-    Next: "sns:NotifySuccess"
-    Comment: Task to reserve order items in inventory
-    Catch:
-      - ErrorEquals:
-          - ErrReserveInventory
-        Next: ReleaseInventory
-        ResultPath: $.error
-    TimeoutSeconds: 10
-
-  "sns:NotifySuccess":
-    Type: Task
-    Resource: "arn:aws:states:::sns:publish"
-    Parameters:
-      Message.$: $.order_id
-      TopicArn: "${SagaTopic}"
-    ResultPath: $.notification
-    Next: OrderSucceeded
-  OrderSucceeded:
-    Type: Succeed
-  
-  ReleaseInventory:
-    Type: Task
-    Resource: 'arn:aws:states:::lambda:invoke'
-    OutputPath: $.Payload
-    Parameters:
-      Payload.$: $
-      FunctionName: "${ReleaseInventoryFunction}"
-    Retry:
-      - ErrorEquals:
-          - Lambda.ServiceException
-          - Lambda.AWSLambdaException
-          - Lambda.SdkClientException
-        IntervalSeconds: 2
-        MaxAttempts: 6
-        BackoffRate: 2
-    Next: ProcessRefund
-    Comment: Task to release order items back to inventory
-    Catch:
-      - ErrorEquals:
-          - ErrReleaseInventory
-        Next: "sns:NotifyReleaseInventoryFail"
-        ResultPath: $.error
-    TimeoutSeconds: 10
-  
-  "sns:NotifyReleaseInventoryFail":
-    Type: Task
-    Resource: "arn:aws:states:::sns:publish"
-    Parameters:
-      Message.$: $.order_id
-      TopicArn: "${SagaTopic}"
-    ResultPath: $.notification
-    Next: OrderFailed
-
-  ProcessRefund:
-    Type: Task
-    Resource: 'arn:aws:states:::lambda:invoke'
-    OutputPath: $.Payload
-    Parameters:
-      Payload.$: $
-      FunctionName: "${CreditPaymentFunction}"
-    Retry:
-      - ErrorEquals:
-          - Lambda.ServiceException
-          - Lambda.AWSLambdaException
-          - Lambda.SdkClientException
-        IntervalSeconds: 2
-        MaxAttempts: 6
-        BackoffRate: 2
-    Next: UpdateOrderStatus
-    Comment: Task to process order refund
-    Catch:
-      - ErrorEquals:
-          - ErrProcessRefund
-        Next: "sns:NotifyProcessRefundFail"
-        ResultPath: $.error
-    TimeoutSeconds: 10
-  
-  "sns:NotifyProcessRefundFail":
-    Type: Task
-    Resource: "arn:aws:states:::sns:publish"
-    Parameters:
-      Message.$: $.order_id
-      TopicArn: "${SagaTopic}"
-    ResultPath: $.notification
-    Next: OrderFailed
-
-  UpdateOrderStatus:
-    Type: Task
-    Resource: 'arn:aws:states:::lambda:invoke'
-    OutputPath: $.Payload
-    Parameters:
-      Payload.$: $
-      FunctionName: "${UpdateOrderFunction}"
-    Retry:
-      - ErrorEquals:
-          - Lambda.ServiceException
-          - Lambda.AWSLambdaException
-          - Lambda.SdkClientException
-        IntervalSeconds: 2
-        MaxAttempts: 6
-        BackoffRate: 2
-    Next: OrderFailed
-    Comment: Task sets the order status to "pending".
-    Catch:
-      - ErrorEquals:
-          - ErrUpdateOrderStatus
-        Next:  "sns:NotifyUpdateOrderFail"
-        ResultPath: $.error
-    TimeoutSeconds: 10
-
-  "sns:NotifyUpdateOrderFail":
-    Type: Task
-    Resource: "arn:aws:states:::sns:publish"
-    Parameters:
-      Message.$: $.order_id
-      TopicArn: "${SagaTopic}"
-    ResultPath: $.notification
-    Next: OrderFailed
-
-  OrderFailed:
-    Type: Fail
+        OutputPath: $.Payload
+        Parameters:
+            FunctionName: ${ReleaseInventoryFunction}
+            Payload.$: $
+        Resource: arn:aws:states:::lambda:invoke
+        Retry:
+            - BackoffRate: 2
+              ErrorEquals:
+                - Lambda.ServiceException
+                - Lambda.AWSLambdaException
+                - Lambda.SdkClientException
+              IntervalSeconds: 2
+              MaxAttempts: 6
+        TimeoutSeconds: 10
+        Type: Task
+    ReserveInventory:
+        Catch:
+            - ErrorEquals:
+                - ErrReserveInventory
+              Next: ReleaseInventory
+              ResultPath: $.error
+        Comment: Task to reserve order items in inventory
+        Next: sns:NotifySuccess
+        OutputPath: $.Payload
+        Parameters:
+            FunctionName: ${ReserveInventoryFunction}
+            Payload.$: $
+        Resource: arn:aws:states:::lambda:invoke
+        Retry:
+            - BackoffRate: 2
+              ErrorEquals:
+                - Lambda.ServiceException
+                - Lambda.AWSLambdaException
+                - Lambda.SdkClientException
+              IntervalSeconds: 2
+              MaxAttempts: 6
+        TimeoutSeconds: 10
+        Type: Task
+    UpdateOrderStatus:
+        Catch:
+            - ErrorEquals:
+                - ErrUpdateOrderStatus
+              Next: sns:NotifyUpdateOrderFail
+              ResultPath: $.error
+        Comment: Task sets the order status to "pending".
+        Next: OrderFailed
+        OutputPath: $.Payload
+        Parameters:
+            FunctionName: ${UpdateOrderFunction}
+            Payload.$: $
+        Resource: arn:aws:states:::lambda:invoke
+        Retry:
+            - BackoffRate: 2
+              ErrorEquals:
+                - Lambda.ServiceException
+                - Lambda.AWSLambdaException
+                - Lambda.SdkClientException
+              IntervalSeconds: 2
+              MaxAttempts: 6
+        TimeoutSeconds: 10
+        Type: Task
+    sns:NotifyProcessRefundFail:
+        Next: OrderFailed
+        Parameters:
+            Message.$: $.order_id
+            TopicArn: ${SagaTopic}
+        Resource: arn:aws:states:::sns:publish
+        ResultPath: $.notification
+        Type: Task
+    sns:NotifyReleaseInventoryFail:
+        Next: OrderFailed
+        Parameters:
+            Message.$: $.order_id
+            TopicArn: ${SagaTopic}
+        Resource: arn:aws:states:::sns:publish
+        ResultPath: $.notification
+        Type: Task
+    sns:NotifySuccess:
+        Next: OrderSucceeded
+        Parameters:
+            Message.$: $.order_id
+            TopicArn: ${SagaTopic}
+        Resource: arn:aws:states:::sns:publish
+        ResultPath: $.notification
+        Type: Task
+    sns:NotifyUpdateOrderFail:
+        Next: OrderFailed
+        Parameters:
+            Message.$: $.order_id
+            TopicArn: ${SagaTopic}
+        Resource: arn:aws:states:::sns:publish
+        ResultPath: $.notification
+        Type: Task
+TimeoutSeconds: 15

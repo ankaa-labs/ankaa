@@ -2,57 +2,9 @@
     "Comment": "An example of the Amazon States Language using wait states",
     "StartAt": "SetInitialStatus",
     "States": {
-        "SetInitialStatus": {
-            "Type": "Task",
-            "Resource": "arn:aws:states:::dynamodb:putItem",
-            "Parameters": {
-                "TableName": "${DDBTable}",
-                "Item": {
-                    "Id": {
-                        "S.$": "$.Id"
-                    },
-                    "StartActionAt":{
-                        "S.$": "$.StartTimestamp"
-                    },
-                    "ProcessStatus": {
-                        "S": "STARTED"
-                    },
-                    "LastUpdated": {
-                        "S.$": "$$.State.EnteredTime"
-                    }
-                }
-            },
-            "Retry": [
-                {
-                    "ErrorEquals": [
-                        "States.TaskFailed"
-                    ],
-                    "IntervalSeconds": 20,
-                    "MaxAttempts": 5,
-                    "BackoffRate": 10
-                }
-            ],
-            "Next": "WaitUntil",
-            "ResultPath": null,
-            "OutputPath": "$"
-        },
-        "WaitUntil": {
-            "Type": "Wait",
-            "TimestampPath": "$.StartTimestamp",
-            "Next": "SetFinalStatus",
-            "OutputPath": "$"
-        },
         "SetFinalStatus": {
-            "Type": "Task",
-            "Resource": "arn:aws:states:::dynamodb:updateItem",
+            "End": true,
             "Parameters": {
-                "TableName": "${DDBTable}",
-                "Key": {
-                    "Id": {
-                        "S.$": "$.Id"
-                    }
-                },
-                "UpdateExpression": "SET ProcessStatus = :newStatus, LastUpdated = :newTimestamp",
                 "ExpressionAttributeValues": {
                     ":newStatus": {
                         "S": "COMPLETED"
@@ -60,20 +12,68 @@
                     ":newTimestamp": {
                         "S.$": "$$.State.EnteredTime"
                     }
-                }
+                },
+                "Key": {
+                    "Id": {
+                        "S.$": "$.Id"
+                    }
+                },
+                "TableName": "${DDBTable}",
+                "UpdateExpression": "SET ProcessStatus = :newStatus, LastUpdated = :newTimestamp"
             },
+            "Resource": "arn:aws:states:::dynamodb:updateItem",
+            "ResultPath": null,
             "Retry": [
                 {
+                    "BackoffRate": 10,
                     "ErrorEquals": [
                         "States.TaskFailed"
                     ],
                     "IntervalSeconds": 20,
-                    "MaxAttempts": 5,
-                    "BackoffRate": 10
+                    "MaxAttempts": 5
                 }
             ],
+            "Type": "Task"
+        },
+        "SetInitialStatus": {
+            "Next": "WaitUntil",
+            "OutputPath": "$",
+            "Parameters": {
+                "Item": {
+                    "Id": {
+                        "S.$": "$.Id"
+                    },
+                    "LastUpdated": {
+                        "S.$": "$$.State.EnteredTime"
+                    },
+                    "ProcessStatus": {
+                        "S": "STARTED"
+                    },
+                    "StartActionAt": {
+                        "S.$": "$.StartTimestamp"
+                    }
+                },
+                "TableName": "${DDBTable}"
+            },
+            "Resource": "arn:aws:states:::dynamodb:putItem",
             "ResultPath": null,
-            "End": true
+            "Retry": [
+                {
+                    "BackoffRate": 10,
+                    "ErrorEquals": [
+                        "States.TaskFailed"
+                    ],
+                    "IntervalSeconds": 20,
+                    "MaxAttempts": 5
+                }
+            ],
+            "Type": "Task"
+        },
+        "WaitUntil": {
+            "Next": "SetFinalStatus",
+            "OutputPath": "$",
+            "TimestampPath": "$.StartTimestamp",
+            "Type": "Wait"
         }
     }
 }

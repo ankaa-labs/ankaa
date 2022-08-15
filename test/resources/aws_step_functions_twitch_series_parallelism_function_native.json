@@ -2,17 +2,17 @@
     "Comment": "A Hello World example demonstrating various state types of the Amazon States Language",
     "StartAt": "Do Stuff",
     "States": {
-      "Do Stuff": {
-        "Type": "Task",
-        "Resource": "arn:aws:states:::lambda:invoke",
-        "Parameters": {
-          "FunctionName": "${DoStuffFunctionArn}",
-          "Payload": {
-            "bucket": "${TestBucketName}",
-            "prefix.$": "$.prefix"
-          }
-        },
-        "End": true
-      }
+        "Do Stuff": {
+            "End": true,
+            "Parameters": {
+                "FunctionName": "${DoStuffFunctionArn}",
+                "Payload": {
+                    "bucket": "${TestBucketName}",
+                    "prefix.$": "$.prefix"
+                }
+            },
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Type": "Task"
+        }
     }
-  }
+}
