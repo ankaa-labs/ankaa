@@ -2,12 +2,12 @@
     "StartAt": "p",
     "States": {
         "p": {
-            "Type": "Task",
-            "Resource": "foo:bar",
+            "End": true,
             "Parameters": {
                 "abc.$": "States.Format('{} xyz {}', 1, 'def')"
             },
-            "End": true
+            "Resource": "foo:bar",
+            "Type": "Task"
         }
     }
 }

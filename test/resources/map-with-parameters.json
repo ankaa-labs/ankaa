@@ -2,18 +2,18 @@
     "StartAt": "m",
     "States": {
         "m": {
-            "Type": "Map",
-            "Iterator":	{
+            "End": true,
+            "Iterator": {
                 "StartAt": "x",
                 "States": {
                     "x": {
-                        "Type": "Pass",
-                        "End": true
+                        "End": true,
+                        "Type": "Pass"
                     }
                 }
             },
             "Parameters": "$.foo",
-            "End": true
+            "Type": "Map"
         }
     }
 }

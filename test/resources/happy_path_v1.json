@@ -2,21 +2,21 @@
     "Comment": "v1 - Resize uploaded images",
     "StartAt": "Resizer",
     "States": {
-      "Resizer": {
-        "Type": "Task",
-        "Resource": "${ResizerFunctionArn}",
-        "Next": "Publish"
-      },
-      "Publish": {
-        "Type": "Task",
-        "Resource": "arn:aws:states:::lambda:invoke",
-        "Parameters": {
-          "FunctionName": "${PublishFunctionArn}",
-          "Payload": {
-            "Input.$": "$"
-          }
+        "Publish": {
+            "End": true,
+            "Parameters": {
+                "FunctionName": "${PublishFunctionArn}",
+                "Payload": {
+                    "Input.$": "$"
+                }
+            },
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "Type": "Task"
         },
-        "End": true
-      }
+        "Resizer": {
+            "Next": "Publish",
+            "Resource": "${ResizerFunctionArn}",
+            "Type": "Task"
+        }
     }
-  }
+}

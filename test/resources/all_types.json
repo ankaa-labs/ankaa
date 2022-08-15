@@ -2,92 +2,92 @@
     "Comment": "Contrived Valid Example that should have all State types",
     "StartAt": "Pass",
     "States": {
+        "Choice": {
+            "Choices": [
+                {
+                    "Next": "Public",
+                    "Not": {
+                        "StringEquals": "Private",
+                        "Variable": "$.type.foo.bar"
+                    }
+                },
+                {
+                    "Next": "ValueIsZero",
+                    "NumericEquals": 0,
+                    "Variable": "$.value"
+                },
+                {
+                    "And": [
+                        {
+                            "NumericGreaterThanEquals": 20.5,
+                            "Variable": "$.value"
+                        },
+                        {
+                            "NumericLessThan": 30,
+                            "Variable": "$.value"
+                        }
+                    ],
+                    "Next": "ValueInTwenties"
+                }
+            ],
+            "Default": "DefaultState",
+            "Type": "Choice"
+        },
+        "Fail": {
+            "Error": "ERROR",
+            "Type": "Fail"
+        },
+        "Parallel": {
+            "Type": "Parallel"
+        },
+        "Pass": {
+            "End": true,
+            "Result": {
+                "x": 0.1337,
+                "y": 3.14159
+            },
+            "ResultPath": "$.coords",
+            "Type": "Pass"
+        },
         "SimpleTask": {
             "Comment": "This is a comment",
-            "Type": "Task",
+            "End": true,
             "Resource": "asd",
-            "End": true
+            "Type": "Task"
+        },
+        "Succeed": {
+            "Type": "Succeed"
         },
         "Task": {
-            "Type": "Task",
-            "Resource": "asd",
             "Catch": [
                 {
                     "ErrorEquals": [
                         "CustomError1",
                         "CustomError2"
                     ],
-                    "ResultPath": "$.asd",
-                    "Next": "Pass"
+                    "Next": "Pass",
+                    "ResultPath": "$.asd"
                 }
             ],
+            "End": true,
+            "Resource": "asd",
             "Retry": [
                 {
+                    "BackoffRate": 2.5,
                     "ErrorEquals": [
                         "CustomError1",
                         "CustomError2"
                     ],
                     "IntervalSeconds": 3,
-                    "MaxAttempts": 10,
-                    "BackoffRate": 2.5
+                    "MaxAttempts": 10
                 }
             ],
-            "End": true
-        },
-        "Pass": {
-            "Type": "Pass",
-            "Result": {
-                "x": 0.1337,
-                "y": 3.14159
-            },
-            "ResultPath": "$.coords",
-            "End": true
-        },
-        "Choice": {
-            "Type": "Choice",
-            "Choices": [
-                {
-                    "Not": {
-                        "Variable": "$.type.foo.bar",
-                        "StringEquals": "Private"
-                    },
-                    "Next": "Public"
-                },
-                {
-                    "Variable": "$.value",
-                    "NumericEquals": 0,
-                    "Next": "ValueIsZero"
-                },
-                {
-                    "And": [
-                        {
-                            "Variable": "$.value",
-                            "NumericGreaterThanEquals": 20.5
-                        },
-                        {
-                            "Variable": "$.value",
-                            "NumericLessThan": 30
-                        }
-                    ],
-                    "Next": "ValueInTwenties"
-                }
-            ],
-            "Default": "DefaultState"
-        },
-        "Fail": {
-            "Type": "Fail",
-            "Error": "ERROR"
-        },
-        "Succeed": {
-            "Type": "Succeed"
-        },
-        "Parallel": {
-            "Type": "Parallel"
+            "Type": "Task"
         },
         "Wait": {
-            "Type": "Wait",
             "End": true,
-            "Seconds": 10
+            "Seconds": 10,
+            "Type": "Wait"
         }
     }
 }

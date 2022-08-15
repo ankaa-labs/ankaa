@@ -2,11 +2,11 @@
     "StartAt": "p",
     "States": {
         "p": {
-            "Type": "Task",
+            "End": true,
+            "HeartbeatSecondsPath": "$.y",
             "Resource": "foo:bar",
             "TimeoutSecondsPath": "$.x",
-            "HeartbeatSecondsPath": "$.y",
-            "End": true
+            "Type": "Task"
         }
     }
 }

@@ -2,10 +2,10 @@
     "StartAt": "p",
     "States": {
         "p": {
-            "Type": "Task",
+            "End": true,
             "Resource": "foo:bar",
             "ResultPath": "$.foo",
-            "End": true
+            "Type": "Task"
         }
     }
 }

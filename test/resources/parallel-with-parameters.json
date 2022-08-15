@@ -2,19 +2,19 @@
     "StartAt": "p",
     "States": {
         "p": {
-            "Type": "Parallel",
             "Branches": [
-	            {
-	                "StartAt": "x",
-	                "States": {
-	                    "x": {
-	                        "Type": "Succeed"
-	                    }
-	                }
-	            }
+                {
+                    "StartAt": "x",
+                    "States": {
+                        "x": {
+                            "Type": "Succeed"
+                        }
+                    }
+                }
             ],
+            "End": true,
             "Parameters": "$.foo",
-            "End": true
+            "Type": "Parallel"
         }
     }
 }

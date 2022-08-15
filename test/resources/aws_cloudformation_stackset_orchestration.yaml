@@ -1,41 +1,41 @@
 StartAt: CreateStackSetInstances
 States:
-  CreateStackSetInstances:
-    Type: Map
-    ItemsPath: $.stacksets
-    Iterator:
-      StartAt: CreateUpdateDeleteStackInstances
-      States:
-        CreateUpdateDeleteStackInstances:
-          Type: Task
-          Resource: !GetAtt CreateUpdateDeleteStackInstances.Arn
-          Retry:
-            - ErrorEquals:
-                - OperationInProgressException
-                - ClientError
-              IntervalSeconds: 120
-              BackoffRate: 1.1
-              MaxAttempts: 30
-          Next: VerifyStackInstanceStatus
-        VerifyStackInstanceStatus:
-          Type: Task
-          Resource: !GetAtt VerifyStackInstanceStatus.Arn
-          Retry:
-            - ErrorEquals:
-                - OperationInProgressException
-                - ClientError
-              IntervalSeconds: 120
-              BackoffRate: 1.1
-              MaxAttempts: 30
-          Next: IsStackSetInstanceReady
-        IsStackSetInstanceReady:
-          Type: Choice
-          Choices:
-            - Variable: $.stackset_instance_ready
-              BooleanEquals: false
-              Next: VerifyStackInstanceStatus
-          Default: Done
-        Done:
-          Type: Pass
-          End: true
-    End: true
+    CreateStackSetInstances:
+        End: true
+        ItemsPath: $.stacksets
+        Iterator:
+            StartAt: CreateUpdateDeleteStackInstances
+            States:
+                CreateUpdateDeleteStackInstances:
+                    Next: VerifyStackInstanceStatus
+                    Resource: CreateUpdateDeleteStackInstances.Arn
+                    Retry:
+                        - BackoffRate: 1.1
+                          ErrorEquals:
+                            - OperationInProgressException
+                            - ClientError
+                          IntervalSeconds: 120
+                          MaxAttempts: 30
+                    Type: Task
+                Done:
+                    End: true
+                    Type: Pass
+                IsStackSetInstanceReady:
+                    Choices:
+                        - BooleanEquals: false
+                          Next: VerifyStackInstanceStatus
+                          Variable: $.stackset_instance_ready
+                    Default: Done
+                    Type: Choice
+                VerifyStackInstanceStatus:
+                    Next: IsStackSetInstanceReady
+                    Resource: VerifyStackInstanceStatus.Arn
+                    Retry:
+                        - BackoffRate: 1.1
+                          ErrorEquals:
+                            - OperationInProgressException
+                            - ClientError
+                          IntervalSeconds: 120
+                          MaxAttempts: 30
+                    Type: Task
+        Type: Map

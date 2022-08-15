@@ -2,13 +2,13 @@
     "StartAt": "m",
     "States": {
         "m": {
-            "Type": "Map",
-            "Iterator":	{
+            "End": true,
+            "Iterator": {
                 "StartAt": "x",
                 "States": {
                     "x": {
-                        "Type": "Pass",
-                        "End": true
+                        "End": true,
+                        "Type": "Pass"
                     }
                 }
             },
@@ -18,7 +18,7 @@
                 "b.$": "$.y",
                 "c.$": "$$.z"
             },
-            "End": true
+            "Type": "Map"
         }
     }
 }

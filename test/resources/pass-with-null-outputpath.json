@@ -2,14 +2,13 @@
     "StartAt": "p",
     "States": {
         "p": {
-            "Type": "Pass",
+            "End": true,
+            "OutputPath": null,
             "Result": {
-                "foo": 1,
-                "bar": 2
+                "bar": 2,
+                "foo": 1
             },
-            "OutputPath": null, 
-            "End": true
+            "Type": "Pass"
         }
     }
 }
-  

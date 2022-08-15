@@ -2,8 +2,8 @@
     "StartAt": "p",
     "States": {
         "p": {
-            "Type": "Fail",
-            "Parameters": "I'm a parameter!"
+            "Parameters": "I'm a parameter!",
+            "Type": "Fail"
         }
     }
 }

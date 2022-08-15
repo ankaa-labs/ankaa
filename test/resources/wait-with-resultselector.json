@@ -2,14 +2,14 @@
     "StartAt": "p",
     "States": {
         "p": {
-            "Type": "Wait",
-            "Seconds": 1,
+            "End": true,
             "ResultSelector": {
                 "a": "x",
                 "b.$": "$.y",
                 "c.$": "$$.z"
             },
-            "End": true
+            "Seconds": 1,
+            "Type": "Wait"
         }
     }
 }

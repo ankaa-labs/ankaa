@@ -2,43 +2,43 @@
     "StartAt": "A",
     "States": {
         "A": {
-            "Type": "Parallel",
             "Branches": [
-	            {
-	                "StartAt": "Sub1_1",
-	                "States": {
-	                    "Sub1_1": {
-	                        "Type": "Pass",
-	                        "Next": "Sub2_1"
-	                    }
-	                }
-	            },
-	            {
-	                "StartAt": "Sub2_1",
-	                "States": {
-	                    "Sub2_1": {
-	                        "Type": "Succeed"
-	                    }
-	                }
-	            }
-            ],
-            "Next": "X"
-        },
-        "X": {
-            "Type": "Choice",
-            "Choices": [
-	            {
-                    "Variable": "$.x",
-                    "NumericEquals": 1,
-                    "Next": "Sub1_1"
+                {
+                    "StartAt": "Sub1_1",
+                    "States": {
+                        "Sub1_1": {
+                            "Next": "Sub2_1",
+                            "Type": "Pass"
+                        }
+                    }
                 },
-	            {
-                    "Variable": "$.x",
-                    "NumericEquals": 1,
-                    "Next": "Z"
+                {
+                    "StartAt": "Sub2_1",
+                    "States": {
+                        "Sub2_1": {
+                            "Type": "Succeed"
+                        }
+                    }
                 }
             ],
-            "Default": "Sub1_1"
+            "Next": "X",
+            "Type": "Parallel"
+        },
+        "X": {
+            "Choices": [
+                {
+                    "Next": "Sub1_1",
+                    "NumericEquals": 1,
+                    "Variable": "$.x"
+                },
+                {
+                    "Next": "Z",
+                    "NumericEquals": 1,
+                    "Variable": "$.x"
+                }
+            ],
+            "Default": "Sub1_1",
+            "Type": "Choice"
         },
         "Z": {
             "Type": "Succeed"

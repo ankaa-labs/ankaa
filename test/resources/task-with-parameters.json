@@ -2,10 +2,10 @@
     "StartAt": "p",
     "States": {
         "p": {
-            "Type": "Task",
-            "Resource": "foo:bar",
+            "End": true,
             "Parameters": "I'm a parameter!",
-            "End": true
+            "Resource": "foo:bar",
+            "Type": "Task"
         }
     }
 }

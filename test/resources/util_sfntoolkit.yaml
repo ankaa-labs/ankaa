@@ -1,109 +1,61 @@
 Comment: A utility state machine to run a glue crawler and monitor it until completion
 StartAt: StartCrawler
 States:
-  StartCrawler:
-    Type: Task
-    Parameters:
-      Name.$: $.crawler_name
-    Resource: arn:aws:states:::aws-sdk:glue:startCrawler
-    Retry:
-      - ErrorEquals:
-          - Glue.EntityNotFoundException
-        BackoffRate: 1
-        IntervalSeconds: 1
-        MaxAttempts: 0
-        Comment: EntityNotFoundException - Fail immediately
-      - ErrorEquals:
-          - Glue.CrawlerRunningException
-        BackoffRate: 1
-        IntervalSeconds: 1
-        MaxAttempts: 0
-    Next: GetCrawler
-    ResultPath: $.response.start_crawler
-    Catch:
-      - ErrorEquals:
-          - Glue.CrawlerRunningException
+    GetCrawler:
+        Next: Is Running?
+        Parameters:
+            Name.$: $.crawler_name
+        Resource: arn:aws:states:::aws-sdk:glue:getCrawler
+        ResultPath: $.response.get_crawler
+        Retry:
+            - BackoffRate: 2
+              ErrorEquals:
+                - States.ALL
+              IntervalSeconds: 1
+              MaxAttempts: 8
+        Type: Task
+    Is Running?:
+        Choices:
+            - Next: Wait for Crawler To Complete
+              Or:
+                - StringEquals: RUNNING
+                  Variable: $.response.get_crawler.Crawler.State
+                - StringEquals: STOPPING
+                  Variable: $.response.get_crawler.Crawler.State
+        Default: Prepare Output
+        Type: Choice
+    Prepare Output:
+        End: true
+        Parameters:
+            LastCrawl.$: $.response.get_crawler.Crawler.LastCrawl
+            crawler_name.$: $.crawler_name
+        Type: Pass
+    StartCrawler:
+        Catch:
+            - Comment: Crawler Already Running, just continue to monitor
+              ErrorEquals:
+                - Glue.CrawlerRunningException
+              Next: GetCrawler
+              ResultPath: $.response.start_crawler
         Next: GetCrawler
-        Comment: Crawler Already Running, just continue to monitor
+        Parameters:
+            Name.$: $.crawler_name
+        Resource: arn:aws:states:::aws-sdk:glue:startCrawler
         ResultPath: $.response.start_crawler
-  GetCrawler:
-    Type: Task
-    Parameters:
-      Name.$: $.crawler_name
-    Resource: arn:aws:states:::aws-sdk:glue:getCrawler
-    ResultPath: $.response.get_crawler
-    Retry:
-      - ErrorEquals:
-          - States.ALL
-        BackoffRate: 2
-        IntervalSeconds: 1
-        MaxAttempts: 8
-    Next: Is Running?
-  Is Running?:
-    Type: Choice
-    Choices:
-      - Or:
-          - Variable: $.response.get_crawler.Crawler.State
-            StringEquals: RUNNING
-          - Variable: $.response.get_crawler.Crawler.State
-            StringEquals: STOPPING
-        Next: Wait for Crawler To Complete
-    Default: Prepare Output
-  Wait for Crawler To Complete:
-    Type: Wait
-    Seconds: 5
-    Next: GetCrawler
-  Prepare Output:
-    Type: Pass
-    End: true
-    Parameters:
-      crawler_name.$: $.crawler_name
-      LastCrawl.$: $.response.get_crawler.Crawler.LastCrawl
-
-
-
-
----
-Comment: A utility state machine to run all Glue Crawlers that match tags
-StartAt: Get Glue Crawler List
-States:
-  Get Glue Crawler List:
-    Type: Task
-    Parameters:
-      Tags.$: $.tags 
-    Resource: arn:aws:states:::aws-sdk:glue:listCrawlers
-    Retry:
-      - ErrorEquals:
-          - States.ALL
-        IntervalSeconds: 2
-        MaxAttempts: 3
-        BackoffRate: 5
-    OutputPath: $.CrawlerNames
-    Next: Run Glue Crawlers
-  Run Glue Crawlers:
-    Type: Map
-    Iterator:
-      StartAt: Run Glue Crawler
-      States:
-        Run Glue Crawler:
-          Type: Task
-          Resource: arn:aws:states:::states:startExecution.sync:2
-          Parameters:
-            StateMachineArn: !Ref StateMachineUtilRunGlueCrawler
-            Input:
-              crawler_name.$: $
-          Retry:
-            - ErrorEquals:
-                - States.ALL
-              IntervalSeconds: 2
-              MaxAttempts: 3
-              BackoffRate: 5
-          Catch:
-            - ErrorEquals:
-                - States.ALL
-              Next: Success
-          Next: Success
-        Success:
-          Type: Succeed
-    End: true
-    ResultPath: null
+        Retry:
+            - BackoffRate: 1
+              Comment: EntityNotFoundException - Fail immediately
+              ErrorEquals:
+                - Glue.EntityNotFoundException
+              IntervalSeconds: 1
+              MaxAttempts: 0
+            - BackoffRate: 1
+              ErrorEquals:
+                - Glue.CrawlerRunningException
+              IntervalSeconds: 1
+              MaxAttempts: 0
+        Type: Task
+    Wait for Crawler To Complete:
+        Next: GetCrawler
+        Seconds: 5
+        Type: Wait

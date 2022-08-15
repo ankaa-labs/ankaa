@@ -2,12 +2,12 @@
     "StartAt": "p",
     "States": {
         "p": {
-            "Type": "Task",
+            "End": true,
             "Resource": "foo:bar",
             "ResultSelector": {
                 "abc.$": " States.Array('Foo', $.xyz, 'Bar', 2.3)"
             },
-            "End": true
+            "Type": "Task"
         }
     }
 }

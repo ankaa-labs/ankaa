@@ -3,30 +3,30 @@
     "StartAt": "Pass",
     "States": {
         "TaskFn": {
-            "Type": "TaskFn",
-            "Resource": "asd",
             "Catch": [
                 {
                     "ErrorEquals": [
                         "CustomError1",
                         "CustomError2"
                     ],
-                    "ResultPath": "$.asd",
-                    "Next": "Pass"
+                    "Next": "Pass",
+                    "ResultPath": "$.asd"
                 }
             ],
+            "End": true,
+            "Resource": "asd",
             "Retry": [
                 {
+                    "BackoffRate": 2.5,
                     "ErrorEquals": [
                         "CustomError1",
                         "CustomError2"
                     ],
                     "IntervalSeconds": 3,
-                    "MaxAttempts": 10,
-                    "BackoffRate": 2.5
+                    "MaxAttempts": 10
                 }
             ],
-            "End": true
+            "Type": "TaskFn"
         }
     }
 }

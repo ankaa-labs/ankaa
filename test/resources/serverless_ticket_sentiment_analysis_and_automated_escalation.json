@@ -2,119 +2,105 @@
     "Comment": "Understand the ticket sentiment, apply tags and check back when answered to ensure SLA's are met",
     "StartAt": "FullTicketInfo",
     "States": {
-       "FullTicketInfo": {
-        "Type" : "Task",
-        "Resource": "${ZenDeskDemoGetFullTicket.Arn}",
-        "InputPath":  "$.detail.ticket_event.ticket",
-        "ResultPath": "$",
-        "Next": "GetSentiment"
-      },
-      "GetSentiment": {
-        "Type": "Task",
-        "Resource": "${ZenDeskDemoGetSentiment.Arn}",
-        "InputPath": "$.raw_subject",
-        "ResultPath": "$.sentiment",
-        "OutputPath": "$",
-        "Next": "isNegative"
-      },
-      "isNegative": {
-        "Type" : "Choice",
-        "Choices": [
-          {
-            "Variable": "$.sentiment.Sentiment",
-            "StringEquals": "NEGATIVE",
-            "Next": "setTags"
-          }
-        ],
-        "Default": "ClosedOrNotNegative"
-      },
-      
-     
-  
-      "setTags": {
-        "Type" : "Task",
-        "Resource": "${ZenDeskDemoSetTags.Arn}",
-        "ResultPath": "$.tags",
-        "OutputPath": "$",
-        "Next": "isClosed"
-      },
-      
-      
-   "GetSLAWaitTime": {
-        "Type" : "Choice",
-        "Choices": [
-          {
-            "Variable": "$.priority",
-            "StringEquals": "normal",
-            "Next": "SLAHighWait"
-          },
-          {
-            "Variable": "$.priority",
-            "StringEquals": "high",
-            "Next": "SLAUrgentWait"
-          },
-          {
-            "Variable": "$.priority",
-            "StringEquals": "urgent",
-            "Next": "FinalEscalationState"
-          }
-        ],
-         "Default": "SLANormalWait"
-         
-      },
-      
-      
-     "FinalEscalationState": {
-             "Comment" : "Ticket cannot be escalated further",
-             "Type": "Succeed"
-         },
-      
-      "EscalatePriority": {
-          "Type" : "Task",
-          "Resource": "${ZenDeskDemoSetPriority.Arn}",
-          "InputPath":  "$",
-          "ResultPath": "$",
-          "Next": "isClosed"
-      },
-      "SLANormalWait": {
-          "Type": "Wait",
-          "Seconds": "${SLANormalWait}",
-          "Next": "EscalatePriority"
+        "ClosedOrNotNegative": {
+            "End": true,
+            "Result": {
+                "x-datum": 1,
+                "y-datum": 1
+            },
+            "ResultPath": "$.coords",
+            "Type": "Pass"
         },
-        
+        "EscalatePriority": {
+            "InputPath": "$",
+            "Next": "isClosed",
+            "Resource": "${ZenDeskDemoSetPriority.Arn}",
+            "ResultPath": "$",
+            "Type": "Task"
+        },
+        "FinalEscalationState": {
+            "Comment": "Ticket cannot be escalated further",
+            "Type": "Succeed"
+        },
+        "FullTicketInfo": {
+            "InputPath": "$.detail.ticket_event.ticket",
+            "Next": "GetSentiment",
+            "Resource": "${ZenDeskDemoGetFullTicket.Arn}",
+            "ResultPath": "$",
+            "Type": "Task"
+        },
+        "GetSLAWaitTime": {
+            "Choices": [
+                {
+                    "Next": "SLAHighWait",
+                    "StringEquals": "normal",
+                    "Variable": "$.priority"
+                },
+                {
+                    "Next": "SLAUrgentWait",
+                    "StringEquals": "high",
+                    "Variable": "$.priority"
+                },
+                {
+                    "Next": "FinalEscalationState",
+                    "StringEquals": "urgent",
+                    "Variable": "$.priority"
+                }
+            ],
+            "Default": "SLANormalWait",
+            "Type": "Choice"
+        },
+        "GetSentiment": {
+            "InputPath": "$.raw_subject",
+            "Next": "isNegative",
+            "OutputPath": "$",
+            "Resource": "${ZenDeskDemoGetSentiment.Arn}",
+            "ResultPath": "$.sentiment",
+            "Type": "Task"
+        },
         "SLAHighWait": {
-          "Type": "Wait",
-          "Seconds": "${SLAHighWait}",
-          "Next": "EscalatePriority"
+            "Next": "EscalatePriority",
+            "Seconds": "${SLAHighWait}",
+            "Type": "Wait"
         },
-        
-        
+        "SLANormalWait": {
+            "Next": "EscalatePriority",
+            "Seconds": "${SLANormalWait}",
+            "Type": "Wait"
+        },
         "SLAUrgentWait": {
-          "Type": "Wait",
-          "Seconds":"${SLAUrgentWait}",
-          "Next": "EscalatePriority"
+            "Next": "EscalatePriority",
+            "Seconds": "${SLAUrgentWait}",
+            "Type": "Wait"
         },
-      "isClosed": {
-        "Type" : "Choice",
-        "Choices": [
-          {
-            "Variable": "$.status",
-            "StringEquals": "open",
-            "Next": "GetSLAWaitTime"
-          }
-        ],
-        "Default": "ClosedOrNotNegative"
-      },
-     
-      "ClosedOrNotNegative": {
-          "Type": "Pass",
-          "Result": {
-            "x-datum": 1,
-            "y-datum": 1
-          },
-          "ResultPath": "$.coords",
-          "End": true
+        "isClosed": {
+            "Choices": [
+                {
+                    "Next": "GetSLAWaitTime",
+                    "StringEquals": "open",
+                    "Variable": "$.status"
+                }
+            ],
+            "Default": "ClosedOrNotNegative",
+            "Type": "Choice"
+        },
+        "isNegative": {
+            "Choices": [
+                {
+                    "Next": "setTags",
+                    "StringEquals": "NEGATIVE",
+                    "Variable": "$.sentiment.Sentiment"
+                }
+            ],
+            "Default": "ClosedOrNotNegative",
+            "Type": "Choice"
+        },
+        "setTags": {
+            "Next": "isClosed",
+            "OutputPath": "$",
+            "Resource": "${ZenDeskDemoSetTags.Arn}",
+            "ResultPath": "$.tags",
+            "Type": "Task"
         }
-                            
     }
-  }
+}

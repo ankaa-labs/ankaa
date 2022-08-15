@@ -1,105 +1,105 @@
 {
     "StartAt": "Process Podcast Rss",
     "States": {
-      "Process Podcast Rss": {
-        "Type": "Task",
-        "Resource": "${processPodcastRss.Arn}",
-        "Next": "Create Custom Vocabulary for Transcribe",
-        "ResultPath": "$"
-      },
-      "Create Custom Vocabulary for Transcribe": {
-        "Type": "Task",
-        "Resource": "${createTranscribeVocabulary.Arn}",
-        "Next": "Is Vocabulary Completed?",
-        "ResultPath": "$.vocabularyInfo"
-      },
-      "Is Vocabulary Completed?": {
-        "Type": "Choice",
-        "Choices": [
-          {
-            "Variable": "$.vocabularyInfo.status",
-            "StringEquals": "READY",
-            "Next": "Create ElasticSearch Index Mapping"
-          },
-          {
-            "Variable": "$.vocabularyInfo.status",
-            "StringEquals": "PENDING",
-            "Next": "Wait For Vocabulary Creation"
-          },
-          {
-            "Variable": "$.vocabularyInfo.status",
-            "StringEquals": "FAILED",
-            "Next": "Processing Error"
-          }
-        ],
-        "Default": "Processing Error"
-      },
-      "Wait For Vocabulary Creation": {
-        "Type": "Wait",
-        "Seconds": 5,
-        "Next": "Check Vocabulary Status"
-      },
-      "Check Vocabulary Status": {
-        "Type": "Task",
-        "Resource": "${monitorTranscribeVocabulary.Arn}",
-        "Next": "Is Vocabulary Completed?",
-        "InputPath": "$.vocabularyInfo",
-        "ResultPath": "$.vocabularyInfo"
-      },
-      "Create ElasticSearch Index Mapping": {
-        "Type": "Task",
-        "Resource": "${createElasticsearchIndex.Arn}",
-        "Next": "Process Podcast Episodes",
-        "Catch": [
-          {
-            "ErrorEquals": [
-              "States.ALL"
+        "Are all Episodes Processed?": {
+            "Choices": [
+                {
+                    "Next": "Delete Transcribe Custom Vocabulary",
+                    "StringEquals": "COMPLETE",
+                    "Variable": "$.episodes.status"
+                }
             ],
-            "Next": "Delete Transcribe Custom Vocabulary"
-          }
-        ],
-        "InputPath": null,
-        "ResultPath": null
-      },
-      "Process Podcast Episodes": {
-        "Type": "Task",
-        "Resource": "${processPodcastItem.Arn}",
-        "Next": "Are all Episodes Processed?",
-        "Catch": [
-          {
-            "ErrorEquals": [
-              "States.ALL"
+            "Default": "Wait 30 Seconds",
+            "Type": "Choice"
+        },
+        "Check Vocabulary Status": {
+            "InputPath": "$.vocabularyInfo",
+            "Next": "Is Vocabulary Completed?",
+            "Resource": "${monitorTranscribeVocabulary.Arn}",
+            "ResultPath": "$.vocabularyInfo",
+            "Type": "Task"
+        },
+        "Create Custom Vocabulary for Transcribe": {
+            "Next": "Is Vocabulary Completed?",
+            "Resource": "${createTranscribeVocabulary.Arn}",
+            "ResultPath": "$.vocabularyInfo",
+            "Type": "Task"
+        },
+        "Create ElasticSearch Index Mapping": {
+            "Catch": [
+                {
+                    "ErrorEquals": [
+                        "States.ALL"
+                    ],
+                    "Next": "Delete Transcribe Custom Vocabulary"
+                }
             ],
-            "Next": "Delete Transcribe Custom Vocabulary"
-          }
-        ],
-        "ResultPath": "$.episodes"
-      },
-      "Are all Episodes Processed?": {
-        "Type": "Choice",
-        "Choices": [
-          {
-            "Variable": "$.episodes.status",
-            "StringEquals": "COMPLETE",
-            "Next": "Delete Transcribe Custom Vocabulary"
-          }
-        ],
-        "Default": "Wait 30 Seconds"
-      },
-      "Wait 30 Seconds": {
-        "Type": "Wait",
-        "Seconds": 30,
-        "Next": "Process Podcast Episodes"
-      },
-      "Delete Transcribe Custom Vocabulary": {
-        "Type": "Task",
-        "Resource": "${deleteTranscribeVocabulary.Arn}",
-        "InputPath": "$.vocabularyInfo",
-        "ResultPath": "$.vocabularyInfo",
-        "End": true
-      },
-      "Processing Error": {
-        "Type": "Fail"
-      }
+            "InputPath": null,
+            "Next": "Process Podcast Episodes",
+            "Resource": "${createElasticsearchIndex.Arn}",
+            "ResultPath": null,
+            "Type": "Task"
+        },
+        "Delete Transcribe Custom Vocabulary": {
+            "End": true,
+            "InputPath": "$.vocabularyInfo",
+            "Resource": "${deleteTranscribeVocabulary.Arn}",
+            "ResultPath": "$.vocabularyInfo",
+            "Type": "Task"
+        },
+        "Is Vocabulary Completed?": {
+            "Choices": [
+                {
+                    "Next": "Create ElasticSearch Index Mapping",
+                    "StringEquals": "READY",
+                    "Variable": "$.vocabularyInfo.status"
+                },
+                {
+                    "Next": "Wait For Vocabulary Creation",
+                    "StringEquals": "PENDING",
+                    "Variable": "$.vocabularyInfo.status"
+                },
+                {
+                    "Next": "Processing Error",
+                    "StringEquals": "FAILED",
+                    "Variable": "$.vocabularyInfo.status"
+                }
+            ],
+            "Default": "Processing Error",
+            "Type": "Choice"
+        },
+        "Process Podcast Episodes": {
+            "Catch": [
+                {
+                    "ErrorEquals": [
+                        "States.ALL"
+                    ],
+                    "Next": "Delete Transcribe Custom Vocabulary"
+                }
+            ],
+            "Next": "Are all Episodes Processed?",
+            "Resource": "${processPodcastItem.Arn}",
+            "ResultPath": "$.episodes",
+            "Type": "Task"
+        },
+        "Process Podcast Rss": {
+            "Next": "Create Custom Vocabulary for Transcribe",
+            "Resource": "${processPodcastRss.Arn}",
+            "ResultPath": "$",
+            "Type": "Task"
+        },
+        "Processing Error": {
+            "Type": "Fail"
+        },
+        "Wait 30 Seconds": {
+            "Next": "Process Podcast Episodes",
+            "Seconds": 30,
+            "Type": "Wait"
+        },
+        "Wait For Vocabulary Creation": {
+            "Next": "Check Vocabulary Status",
+            "Seconds": 5,
+            "Type": "Wait"
+        }
     }
-  }
+}

@@ -3,52 +3,52 @@
     "StartAt": "ChoiceStateX",
     "States": {
         "ChoiceStateX": {
-            "Type": "Choice",
             "Choices": [
                 {
+                    "Next": "Public",
                     "Not": {
-                        "Variable": "$.type",
-                        "StringEquals": "Private"
-                    },
-                    "Next": "Public"
+                        "StringEquals": "Private",
+                        "Variable": "$.type"
+                    }
                 },
                 {
-                    "Variable": "$.value",
+                    "Next": "ValueIsZero",
                     "NumericEquals": 0,
-                    "Next": "ValueIsZero"
+                    "Variable": "$.value"
                 },
                 {
                     "And": [
                         {
-                            "Variable": "$.value",
-                            "NumericGreaterThanEquals": 20
+                            "NumericGreaterThanEquals": 20,
+                            "Variable": "$.value"
                         },
                         {
-                            "Variable": "$.value",
-                            "NumericLessThan": 30
+                            "NumericLessThan": 30,
+                            "Variable": "$.value"
                         }
                     ],
                     "Next": "ValueInTwenties"
                 }
             ],
-            "Default": "DefaultState"
-        },
-        "Public": {
-            "Type": "Pass",
-            "Next": "NextState"
-        },
-        "ValueIsZero": {
-            "Type": "Pass",
-            "Next": "NextState"
-        },
-        "ValueInTwenties": {
-            "Type": "Pass",
-            "Next": "NextState"
+            "Default": "DefaultState",
+            "Type": "Choice"
         },
         "DefaultState": {
-            "Type": "Fail",
+            "Cause": "No Matches!",
             "Error": "ERROR",
-            "Cause": "No Matches!"
+            "Type": "Fail"
+        },
+        "Public": {
+            "Next": "NextState",
+            "Type": "Pass"
+        },
+        "ValueInTwenties": {
+            "Next": "NextState",
+            "Type": "Pass"
+        },
+        "ValueIsZero": {
+            "Next": "NextState",
+            "Type": "Pass"
         }
     }
 }

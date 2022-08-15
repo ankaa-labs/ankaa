@@ -2,15 +2,15 @@
     "StartAt": "p",
     "States": {
         "p": {
-            "Type": "Choice",
             "Choices": [
-	            {
-	                "Variable": "$.foo",
-	                "StringEquals": "x",
-	                "Next": "x"
-	            }
+                {
+                    "Next": "x",
+                    "StringEquals": "x",
+                    "Variable": "$.foo"
+                }
             ],
-            "Parameters": "I'm a parameter!"
+            "Parameters": "I'm a parameter!",
+            "Type": "Choice"
         },
         "x": {
             "Type": "Succeed"
