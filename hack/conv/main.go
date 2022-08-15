@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"io/fs"
 	"io/ioutil"
 	"log"
 	"os"
@@ -86,7 +85,53 @@ func main() {
 			continue
 		}
 
-		err = ioutil.WriteFile(yamlFile, data1, fs.ModeAppend)
+		err = ioutil.WriteFile(yamlFile, data1, 0644)
+		if err != nil {
+			log.Printf("ERR: cannot write to file %v, %v, skip it", yamlFile, err)
+			continue
+		}
+
+		log.Printf("convert json %v to yaml %v done", file, yamlFile)
+	}
+
+	// Second, convert all yaml format files to json
+	log.Printf("start to convert all yaml format files to json format")
+	for _, file := range files {
+		if !strings.HasSuffix(file, ".yaml") {
+			log.Printf("%s is not yaml format, skip it", file)
+			continue
+		}
+
+		yamlFile := file[0:len(file)-len(".yaml")] + ".json"
+		if _, err := os.Stat(yamlFile); err == nil {
+			log.Printf("ERR: the target json file %v exists, skip it", yamlFile)
+			continue
+		} else if !errors.Is(err, os.ErrNotExist) {
+			log.Printf("ERR: stat target json file %v, %v, skip it", yamlFile, err)
+			continue
+		}
+
+		data, err := ioutil.ReadFile(file)
+		if err != nil {
+			log.Printf("ERR: cannot read file %v, %v, skip it", file, err)
+			continue
+		}
+
+		var obj interface{}
+		err = yaml.Unmarshal(data, &obj)
+		if err != nil {
+			log.Printf("ERR: cannot unmarshal file %v to json, %v, skip it", file, err)
+			continue
+		}
+
+		obj1 := convert(obj)
+		data1, err := json.MarshalIndent(obj1, "", "    ")
+		if err != nil {
+			log.Printf("ERR: cannot marshal fild %v data to yaml, %v, skip it", file, err)
+			continue
+		}
+
+		err = ioutil.WriteFile(yamlFile, data1, 0644)
 		if err != nil {
 			log.Printf("ERR: cannot write to file %v, %v, skip it", yamlFile, err)
 			continue

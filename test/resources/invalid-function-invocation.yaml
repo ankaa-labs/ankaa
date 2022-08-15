@@ -1,0 +1,8 @@
+StartAt: p
+States:
+    p:
+        End: true
+        Resource: foo:bar
+        ResultSelector:
+            abc.$: States.Xyz($.result)
+        Type: Task

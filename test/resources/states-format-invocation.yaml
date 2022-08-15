@@ -1,0 +1,8 @@
+StartAt: p
+States:
+    p:
+        End: true
+        Parameters:
+            abc.$: States.Format('{} xyz {}', 1, 'def')
+        Resource: foo:bar
+        Type: Task

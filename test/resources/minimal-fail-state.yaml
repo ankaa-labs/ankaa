@@ -1,0 +1,8 @@
+StartAt: A Task
+States:
+    A Task:
+        Next: Final
+        Resource: arn:aws:states:us-west-2:42:activity:a-task
+        Type: Task
+    Final:
+        Type: Fail
