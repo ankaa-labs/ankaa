@@ -14,7 +14,7 @@ type TaskState struct {
 	ResultPath *string `json:"ResultPath"`
 
 	Retry []Retrier `json:"Retry"`
-	Catch []Catcher `json:"Catch"`
+	Catch Catchers  `json:"Catch"`
 
 	// One of (Next, End)
 	Next *string `json:"Next"`

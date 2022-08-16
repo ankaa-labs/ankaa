@@ -12,3 +12,22 @@ const (
 	ErrorCodeStatesNoChoiceMatched        string = "States.NoChoiceMatched"
 	ErrorCodeStatesIntrinsicFailure       string = "States.IntrinsicFailure"
 )
+
+const (
+	ErrorCodeStatesPrefix = "States."
+)
+
+var (
+	AllErrorCodes = map[string]bool{
+		ErrorCodeStatesAll:                    true,
+		ErrorCodeStatesHeartbeatTimeout:       true,
+		ErrorCodeStatesTimeout:                true,
+		ErrorCodeStatesTaskFailed:             true,
+		ErrorCodeStatesPermissions:            true,
+		ErrorCodeStatesResultPathMatchFailure: true,
+		ErrorCodeStatesParameterPathFailure:   true,
+		ErrorCodeStatesBranchFailed:           true,
+		ErrorCodeStatesNoChoiceMatched:        true,
+		ErrorCodeStatesIntrinsicFailure:       true,
+	}
+)
