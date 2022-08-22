@@ -184,7 +184,7 @@ func TestUnmarshalStateFromJSON(t *testing.T) {
 func TestStateMachineUnmarshal(t *testing.T) {
 	g := NewWithT(t)
 
-	f := path.Join(test.CurrentProjectPath() + "/hack/asl/map-with-null-itemspath.json")
+	f := path.Join(test.CurrentProjectPath() + "/test/resources/map-with-null-itemspath.json")
 	data, err := ioutil.ReadFile(f)
 	g.Expect(err).ToNot(HaveOccurred())
 

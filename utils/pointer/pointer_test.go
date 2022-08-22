@@ -21,3 +21,11 @@ func TestIntPtr(t *testing.T) {
 	expect := 1
 	g.Expect(v).To(Equal(&expect))
 }
+
+func TestFloat32Ptr(t *testing.T) {
+	g := NewWithT(t)
+
+	v := Float32Ptr(1.0)
+	expect := float32(1.0)
+	g.Expect(v).To(Equal(&expect))
+}
