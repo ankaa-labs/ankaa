@@ -16,24 +16,6 @@ func TestCatcherValidate(t *testing.T) {
 	}
 	testCases := []testCase{
 		{
-			desp: "normal one",
-			c: &Catcher{
-				ErrorEquals: []string{ErrorCodeStatesBranchFailed},
-				Next:        "n",
-				ResultPath:  pointer.StringPtr("r"),
-			},
-			err: ``,
-		},
-		{
-			desp: "normal wildcard",
-			c: &Catcher{
-				ErrorEquals: []string{ErrorCodeStatesAll},
-				Next:        "n",
-				ResultPath:  pointer.StringPtr("r"),
-			},
-			err: ``,
-		},
-		{
 			desp: "normal multi",
 			c: &Catcher{
 				ErrorEquals: []string{ErrorCodeStatesBranchFailed, ErrorCodeStatesHeartbeatTimeout, "tt"},
@@ -50,33 +32,6 @@ func TestCatcherValidate(t *testing.T) {
 				ResultPath:  pointer.StringPtr("r"),
 			},
 			err: `ErrorEquals cannot be empty`,
-		},
-		{
-			desp: "empty ErrorEqual item",
-			c: &Catcher{
-				ErrorEquals: []string{ErrorCodeStatesBranchFailed, ErrorCodeStatesHeartbeatTimeout, ""},
-				Next:        "n",
-				ResultPath:  pointer.StringPtr("r"),
-			},
-			err: `ErrorEqual cannot be empty`,
-		},
-		{
-			desp: "not pre defined",
-			c: &Catcher{
-				ErrorEquals: []string{ErrorCodeStatesBranchFailed + "1", ErrorCodeStatesHeartbeatTimeout, "tt"},
-				Next:        "n",
-				ResultPath:  pointer.StringPtr("r"),
-			},
-			err: `ErrorEqual is not pre defined`,
-		},
-		{
-			desp: "multi with ALL",
-			c: &Catcher{
-				ErrorEquals: []string{ErrorCodeStatesBranchFailed, ErrorCodeStatesAll, "tt"},
-				Next:        "n",
-				ResultPath:  pointer.StringPtr("r"),
-			},
-			err: `States\.ALL must be be only element in ErrorEquals`,
 		},
 		{
 			desp: "empty next",
@@ -112,21 +67,14 @@ func TestCatcherIsAnyErrorWildcard(t *testing.T) {
 	}
 	testCases := []testCase{
 		{
-			desp: "not only 1 ErrorEquals",
+			desp: "is not wildcard",
 			c: &Catcher{
-				ErrorEquals: []string{ErrorCodeStatesBranchFailed, ErrorCodeStatesAll},
+				ErrorEquals: []string{ErrorCodeStatesBranchFailed, ErrorCodeStatesHeartbeatTimeout},
 			},
 			expect: false,
 		},
 		{
-			desp: "only 1 but not ALL",
-			c: &Catcher{
-				ErrorEquals: []string{ErrorCodeStatesBranchFailed},
-			},
-			expect: false,
-		},
-		{
-			desp: "only 1 and is ALL",
+			desp: "is wildcard",
 			c: &Catcher{
 				ErrorEquals: []string{ErrorCodeStatesAll},
 			},
