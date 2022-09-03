@@ -1,7 +1,10 @@
 package engine
 
 import (
+	"context"
 	"fmt"
+	"log"
+	"sync/atomic"
 	"time"
 )
 
@@ -84,4 +87,18 @@ func (s *WaitState) Validate() error {
 	}
 
 	return nil
+}
+
+func (s *WaitState) Execute(ctx context.Context, executeFn func(context.Context, string) error) error {
+	log.Printf("execute[%v] WaitState(%v)\n", atomic.AddInt32(&index, 1), s.Comment)
+
+	if s.Seconds != nil {
+		time.Sleep(time.Duration(*s.Seconds) * time.Second)
+	}
+
+	if s.End {
+		return nil
+	}
+
+	return executeFn(ctx, *s.Next)
 }

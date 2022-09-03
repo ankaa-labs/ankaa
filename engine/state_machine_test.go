@@ -196,3 +196,17 @@ func TestStateMachineUnmarshal(t *testing.T) {
 	spew.Dump(s)
 	fmt.Printf("%+v\n", spew.Sprint(s))
 }
+
+func TestStateMachineExecute(t *testing.T) {
+	g := NewWithT(t)
+
+	f := path.Join(test.CurrentProjectPath() + "/test/resources/exec_with_all_types_succeeded.json")
+	data, err := ioutil.ReadFile(f)
+	g.Expect(err).ToNot(HaveOccurred())
+
+	s := &StateMachine{}
+	err = json.Unmarshal(data, s)
+	g.Expect(err).ToNot(HaveOccurred())
+
+	fmt.Printf("%v", s.Execute())
+}
