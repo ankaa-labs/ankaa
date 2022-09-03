@@ -1,6 +1,10 @@
 package engine
 
 import (
+	"context"
+	"fmt"
+	"log"
+	"sync/atomic"
 	"time"
 )
 
@@ -84,8 +88,8 @@ type ChoiceRule struct {
 }
 
 type ChoiceState struct {
-	Type    string  `json:"Type"` // Choice
-	Comment *string `json:"Comment"`
+	Type    string `json:"Type"` // Choice
+	Comment string `json:"Comment"`
 
 	InputPath  *string `json:"InputPath"`
 	OutputPath *string `json:"OutputPath"`
@@ -95,4 +99,14 @@ type ChoiceState struct {
 	Choices []Choice `json:"Choices"`
 
 	Default *string `json:"Default"`
+}
+
+func (s *ChoiceState) Execute(ctx context.Context, executeFn func(context.Context, string) error) error {
+	log.Printf("execute[%v] ChoiceState(%v)\n", atomic.AddInt32(&index, 1), s.Comment)
+
+	if s.Default != nil {
+		return executeFn(ctx, *s.Default)
+	}
+
+	return fmt.Errorf("unexpect choice")
 }

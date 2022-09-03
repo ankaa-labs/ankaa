@@ -1,5 +1,11 @@
 package engine
 
+import (
+	"context"
+	"log"
+	"sync/atomic"
+)
+
 type TaskState struct {
 	// It must be "Task"
 	Type string `json:"Type"`
@@ -31,4 +37,14 @@ type TaskState struct {
 	// Reference Paths
 	TimeoutSecondsPath   *string `json:"TimeoutSecondsPath"`   // One of (TimeoutSeconds)
 	HeartbeatSecondsPath *string `json:"HeartbeatSecondsPath"` // One of (HeartbeatSeconds)
+}
+
+func (s *TaskState) Execute(ctx context.Context, executeFn func(context.Context, string) error) error {
+	log.Printf("execute[%v] TaskState(%v)\n", atomic.AddInt32(&index, 1), s.Resource)
+
+	if s.End != nil && *s.End {
+		return nil
+	}
+
+	return executeFn(ctx, *s.Next)
 }
