@@ -1,0 +1,7 @@
+# List of usernames who may use /lgtm
+reviewers:
+- lsytj0413
+
+# List of usernames who may use /approve
+approvers:
+- lsytj0413
