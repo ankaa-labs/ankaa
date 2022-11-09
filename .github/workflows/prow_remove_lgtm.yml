@@ -1,5 +1,5 @@
 name: "Pull Request update lgtm"
-on: pull_request_target
+on: pull_request
 
 jobs:
   execute:
