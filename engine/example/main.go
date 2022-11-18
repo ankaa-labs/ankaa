@@ -17,19 +17,24 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-package pointer
+package main
 
-// StringPtr return the pointer to v
-func StringPtr(v string) *string {
-	return &v
-}
+import (
+	"fmt"
+	"path"
 
-// IntPtr return the pointer to v
-func IntPtr(v int) *int {
-	return &v
-}
+	"github.com/ankaa-labs/ankaa/engine"
+	"github.com/ankaa-labs/ankaa/test"
+	"github.com/serverlessworkflow/sdk-go/v2/parser"
+)
 
-// Float32Ptr return the pointer to v
-func Float32Ptr(v float32) *float32 {
-	return &v
+func main() {
+	f := path.Join(test.CurrentProjectPath(), "./test/resources/checkinbox.sw.yaml")
+	m, err := parser.FromFile(f)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("start execute")
+	engine.Execute(m)
 }

@@ -17,14 +17,8 @@
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-name: "Pull Request update lgtm"
-on: pull_request
 
-jobs:
-  execute:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: jpmcb/prow-github-actions@v1.1.3
-        with:
-          jobs: 'lgtm'
-          github-token: "${{ secrets.GITHUB_TOKEN }}"
+addheaders:
+	@command -v addlicense > /dev/null || go install -modfile=tools.mod -v github.com/google/addlicense
+	@addlicense -c "The ankaa-labs Authors" -l mit .
+
