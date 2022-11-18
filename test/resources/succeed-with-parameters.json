@@ -1,9 +1,0 @@
-{
-    "StartAt": "p",
-    "States": {
-        "p": {
-            "Parameters": "I'm a parameter!",
-            "Type": "Succeed"
-        }
-    }
-}
