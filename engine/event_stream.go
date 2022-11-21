@@ -17,19 +17,44 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-package pointer
+package engine
 
-// StringPtr return the pointer to v
-func StringPtr(v string) *string {
-	return &v
+import (
+	"sync"
+)
+
+var (
+	stream = &EventStream{
+		objs: make(chan interface{}, 1000),
+	}
+)
+
+type EventStream struct {
+	lock sync.RWMutex
+	objs chan interface{}
+
+	fn []func(obj interface{})
 }
 
-// IntPtr return the pointer to v
-func IntPtr(v int) *int {
-	return &v
+func (s *EventStream) On(fn func(obj interface{})) {
+	s.fn = append(s.fn, fn)
 }
 
-// Float32Ptr return the pointer to v
-func Float32Ptr(v float32) *float32 {
-	return &v
+func (s *EventStream) run() {
+	for obj := range s.objs {
+		for _, fn := range s.fn {
+			fn(obj)
+		}
+	}
+}
+
+func (s *EventStream) Publish(obj interface{}) {
+	s.objs <- obj
+}
+
+func init() {
+	stream.On(func(obj interface{}) {
+		HandleEvent(obj)
+	})
+	go stream.run()
 }
